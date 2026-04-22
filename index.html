@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Gym Tracker"/>
+<title>Gym Tracker</title>
+<style>
+:root{
+  --bg-primary:#ffffff;--bg-secondary:#f4f4f4;--bg-tertiary:#ebebeb;
+  --text-primary:#111111;--text-secondary:#555555;--text-hint:#999999;
+  --accent:#111111;--accent-text:#ffffff;--accent-light:#e8e8e8;--accent-light-text:#111111;
+  --border:#cccccc;--border-strong:#888888;
+  --success-bg:#e6f4ea;--success-border:#4caf50;--success-text:#2e7d32;
+  --danger:#c0392b;--danger-bg:#fdecea;
+  --info-bg:#e8f0fe;--info-text:#1a56db;
+  --warning-bg:#fff8e1;--warning-text:#f57c00;
+  --radius:10px;--radius-sm:7px;
+}
+[data-theme="maxfitness"]{
+  --bg-primary:#1a1a1a;--bg-secondary:#242424;--bg-tertiary:#2e2e2e;
+  --text-primary:#f0f0f0;--text-secondary:#a0a0a0;--text-hint:#666666;
+  --accent:#b89a2a;--accent-text:#1a1a1a;--accent-light:#2d2710;--accent-light-text:#b89a2a;
+  --border:#444444;--border-strong:#666666;
+  --success-bg:#1a2e1a;--success-border:#4caf50;--success-text:#81c784;
+  --danger:#e57373;--danger-bg:#2e1a1a;
+  --info-bg:#1a2040;--info-text:#90caf9;
+  --warning-bg:#2d2710;--warning-text:#b89a2a;
+}
+[data-theme="formfactory"]{
+  --bg-primary:#1c1c1e;--bg-secondary:#252527;--bg-tertiary:#2f2f31;
+  --text-primary:#f2f2f2;--text-secondary:#9a9a9a;--text-hint:#606060;
+  --accent:#8b1a2a;--accent-text:#ffffff;--accent-light:#2e1018;--accent-light-text:#e07080;
+  --border:#444444;--border-strong:#666666;
+  --success-bg:#1a2e1a;--success-border:#4caf50;--success-text:#81c784;
+  --danger:#e07080;--danger-bg:#2e1018;
+  --info-bg:#1a2040;--info-text:#90caf9;
+  --warning-bg:#2d2010;--warning-text:#ffb74d;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg-tertiary);}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text-primary);font-size:16px;}
+.app{max-width:430px;margin:0 auto;background:var(--bg-tertiary);min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.header{padding:14px 16px 10px;background:var(--bg-primary);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.header h1{font-size:20px;font-weight:700;}
+.header-sub{font-size:12px;color:var(--text-secondary);margin-top:1px;}
+.header-right{display:flex;gap:8px;align-items:center;}
+.theme-switcher{display:flex;gap:6px;}
+.theme-dot{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.theme-dot.active{border-color:var(--text-primary);}
+.theme-dot.t-default{background:linear-gradient(135deg,#fff 50%,#111 50%);}
+.theme-dot.t-maxfitness{background:linear-gradient(135deg,#1a1a1a 50%,#b89a2a 50%);}
+.theme-dot.t-formfactory{background:linear-gradient(135deg,#1c1c1e 50%,#8b1a2a 50%);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--bg-primary);border-bottom:1px solid var(--border);}
+.tab{flex:1;padding:8px 4px;font-size:12px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--text-secondary);cursor:pointer;text-align:center;font-weight:500;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.section{display:none;padding:12px;flex:1;}
+.section.active{display:block;}
+
+/* CARDS */
+.card{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+
+/* BUTTONS — all solid now */
+.btn{padding:8px 16px;font-size:13px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-family:inherit;font-weight:500;}
+.btn:active{opacity:0.7;}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);}
+.btn.small{padding:5px 12px;font-size:12px;}
+.btn.icon{padding:5px 8px;font-size:14px;line-height:1;}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:var(--danger-bg);}
+.btn.dominant{width:100%;padding:15px;font-size:16px;font-weight:700;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--radius);margin-bottom:10px;}
+.btn.action{width:100%;padding:11px;font-size:14px;font-weight:600;border:1.5px solid var(--border-strong);border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-primary);margin-bottom:8px;}
+.btn.action.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent);}
+.btn.train-go{flex:2;padding:13px;font-size:15px;font-weight:700;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--radius);}
+.btn.train-cancel{flex:1;padding:13px;font-size:15px;font-weight:600;border:1.5px solid var(--border-strong);border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);}
+.btn.end-session{width:100%;padding:12px;font-size:14px;font-weight:600;border:1.5px solid var(--border-strong);border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-secondary);margin-top:6px;}
+.btn.save-session{width:100%;padding:12px;font-size:14px;font-weight:700;background:var(--accent);color:var(--accent-text);border:none;border-radius:var(--radius);margin-top:6px;}
+
+input,select{border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:9px 12px;font-size:14px;background:var(--bg-secondary);color:var(--text-primary);font-family:inherit;width:100%;outline:none;}
+input:focus,select:focus{border-color:var(--accent);}
+.label{font-size:12px;color:var(--text-secondary);margin-bottom:5px;font-weight:500;}
+.section-title{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+
+/* GYM CARD */
+.gym-card{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.gym-card-name{font-size:17px;font-weight:700;}
+.gym-card-meta{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+.gym-card-last{font-size:13px;color:var(--text-secondary);margin-top:4px;}
+.gym-card-days{font-size:12px;color:var(--text-hint);margin-left:4px;}
+.badge{font-size:11px;padding:3px 10px;border-radius:var(--radius-sm);background:var(--info-bg);color:var(--info-text);cursor:pointer;font-weight:500;border:1px solid var(--info-text);}
+.badge.fav{background:var(--success-bg);color:var(--success-text);border-color:var(--success-text);}
+
+/* TRAINING CARD (home) */
+.training-card{border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+.training-hdr{padding:10px 14px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;}
+.training-body{padding:10px 14px;background:var(--bg-primary);}
+.training-ex{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.training-ex:last-child{border-bottom:none;}
+
+/* SESSION */
+.session-header{padding:4px 0 12px;margin-bottom:10px;border-bottom:1px solid var(--border);}
+.session-gym{font-size:20px;font-weight:700;}
+.session-date-row{display:flex;align-items:center;gap:6px;margin-top:3px;}
+.session-date{font-size:13px;color:var(--text-secondary);}
+.session-edit-box{display:none;background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px;margin-top:8px;border:1px solid var(--border);}
+.session-edit-box.open{display:block;}
+
+/* TEMPLATE PICKER */
+.template-panel{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.template-btn{padding:14px 8px;font-size:13px;font-weight:600;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;text-align:center;}
+.template-btn:hover{border-color:var(--accent);background:var(--accent-light);}
+.template-btn .template-icon{font-size:20px;display:block;margin-bottom:4px;}
+.template-btn .template-sub{font-size:11px;color:var(--text-secondary);font-weight:400;display:block;margin-top:2px;}
+
+/* EX CARD */
+.ex-card{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;transition:background 0.25s,border-color 0.25s;}
+.ex-card.all-done{background:var(--success-bg);border-color:var(--success-border);}
+.ex-name{font-size:15px;font-weight:600;}
+.ex-last{font-size:11px;color:var(--text-secondary);margin-top:3px;word-break:break-all;line-height:1.5;}
+.inline-log{display:none;border-top:1px solid var(--border);margin-top:10px;padding-top:12px;}
+.inline-log.open{display:block;}
+
+/* SET ROWS */
+.sets-grid-hdr{display:grid;grid-template-columns:24px 1fr 1fr 30px;gap:4px;margin-bottom:6px;}
+.sets-grid-hdr span{font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;}
+.set-row{display:grid;grid-template-columns:24px 1fr 1fr 30px;gap:4px;margin-bottom:5px;align-items:center;border-radius:var(--radius-sm);padding:3px 2px;transition:background 0.2s;}
+.set-row.done-row{background:var(--success-bg);}
+.set-row.done-row .set-num{color:var(--success-text);}
+.set-row.done-row input{border-color:var(--success-border);color:var(--success-text);background:transparent;}
+.set-num{font-size:12px;color:var(--text-secondary);text-align:center;font-weight:600;}
+.set-row input{text-align:center;padding:6px 2px;font-size:13px;}
+.done-btn{width:28px;height:28px;border-radius:var(--radius-sm);border:1.5px solid var(--border-strong);background:var(--bg-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-secondary);}
+.done-btn.completed{background:var(--success-bg);border-color:var(--success-border);color:var(--success-text);}
+
+/* SETS COUNTER */
+.sets-counter{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.counter-btn{width:28px;height:28px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.counter-val{font-size:16px;font-weight:600;min-width:22px;text-align:center;}
+
+/* TIMER */
+.timer-bar{display:flex;align-items:center;gap:10px;background:var(--bg-secondary);border-radius:var(--radius-sm);padding:10px 12px;margin:8px 0 10px;border:1px solid var(--border);}
+.timer-bar.hidden{display:none;}
+.timer-cfg{display:none;background:var(--bg-secondary);border-radius:var(--radius);padding:12px;margin-bottom:10px;border:1px solid var(--border);}
+.timer-cfg.open{display:block;}
+.timer-cfg-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.tdot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.tdot.d1{background:var(--info-bg);color:var(--info-text);}
+.tdot.d2{background:var(--warning-bg);color:var(--warning-text);}
+.tdot.d3{background:var(--danger-bg);color:var(--danger);}
+.timer-sec-wrap{display:flex;align-items:center;gap:5px;margin-left:auto;}
+.timer-sec-wrap input{width:60px;text-align:center;padding:6px 4px;font-size:13px;}
+.timer-sec-wrap span{font-size:12px;color:var(--text-secondary);white-space:nowrap;}
+.timer-actions{display:grid;grid-template-columns:auto 60px auto 1fr auto;gap:6px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.timer-actions input{text-align:center;padding:6px 4px;font-size:13px;}
+
+/* MUSCLE GRID */
+.muscle-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
+.muscle-btn{padding:10px 4px;font-size:13px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;text-align:center;font-weight:500;}
+.muscle-btn.selected{background:var(--accent-light);color:var(--accent-light-text);border-color:var(--accent);font-weight:700;}
+
+/* INLINE POPUP */
+.inline-popup{display:none;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:8px;}
+.inline-popup.open{display:block;}
+
+/* LOG */
+.gym-chip{padding:6px 14px;font-size:13px;border:1.5px solid var(--border-strong);border-radius:20px;cursor:pointer;background:var(--bg-secondary);color:var(--text-secondary);margin:0 4px 6px 0;font-weight:500;}
+.gym-chip.selected{background:var(--accent-light);color:var(--accent-light-text);border-color:var(--accent);font-weight:700;}
+.machine-row{padding:10px 0;border-bottom:1px solid var(--border);}
+.machine-row:last-child{border-bottom:none;}
+.log-entry{display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.log-entry:last-child{border-bottom:none;}
+
+/* COMPARE */
+.compare-entry{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
+.compare-entry:last-child{border-bottom:none;}
+.weight-pill{font-size:13px;font-weight:600;padding:4px 12px;background:var(--bg-secondary);border-radius:20px;border:1px solid var(--border);}
+
+/* SETTINGS */
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:14px;font-weight:500;}
+.settings-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+
+/* MODALS */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:300;}
+.confirm-box{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:82%;max-width:300px;}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+.confirm-sub{font-size:13px;color:var(--text-secondary);margin-bottom:16px;}
+.confirm-actions{display:flex;gap:8px;}
+.confirm-actions .btn{flex:1;text-align:center;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:200;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:20px;width:88%;max-width:340px;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div><div style="font-size:20px;font-weight:700;">Gym Tracker</div><div class="header-sub" id="active-gym-label">No favourite gym set</div></div>
+    <div class="header-right">
+      <div class="theme-switcher">
+        <div class="theme-dot t-default active" onclick="setTheme('default',this)"></div>
+        <div class="theme-dot t-maxfitness" onclick="setTheme('maxfitness',this)"></div>
+        <div class="theme-dot t-formfactory" onclick="setTheme('formfactory',this)"></div>
+      </div>
+      <button class="btn small" onclick="switchTab('settings')">Settings</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('home')">Home</button>
+    <button class="tab" onclick="switchTab('gyms')">Gyms</button>
+    <button class="tab" onclick="switchTab('log')">Log</button>
+    <button class="tab" onclick="switchTab('compare')">Compare</button>
+  </div>
+
+  <!-- HOME -->
+  <div id="tab-home" class="section active" style="padding-top:10px;">
+    <!-- Gym picker (from home) -->
+    <div id="home-gym-picker" style="display:none;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:12px;">New training</div>
+      <div class="label">Gym</div>
+      <select id="nt-gym" style="margin-bottom:0;"></select>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn train-go" onclick="openTemplatePicker()">Let's train</button>
+        <button class="btn train-cancel" onclick="closeHomePicker()">✕</button>
+      </div>
+    </div>
+
+    <!-- Template picker -->
+    <div id="template-panel" class="template-panel" style="display:none;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:12px;">Choose a starting point</div>
+      <div class="template-grid">
+        <button class="template-btn" onclick="startWithTemplate('top')">
+          <span class="template-icon">💪</span>Top
+          <span class="template-sub">Bench press + Lat pulldown</span>
+        </button>
+        <button class="template-btn" onclick="startWithTemplate('bottom')">
+          <span class="template-icon">🦵</span>Bottom
+          <span class="template-sub">Leg press + Squat rack</span>
+        </button>
+      </div>
+      <button class="btn action" onclick="startWithTemplate('blank')">+ Start blank session</button>
+      <button class="btn train-cancel" style="width:100%;margin-top:4px;" onclick="closeTemplatePicker()">Cancel</button>
+    </div>
+
+    <!-- Active session -->
+    <div id="active-session" style="display:none;">
+      <div class="session-header">
+        <div class="session-gym" id="session-gym-title"></div>
+        <div class="session-date-row">
+          <span class="session-date" id="session-date-title"></span>
+          <button class="btn icon" style="font-size:12px;padding:2px 6px;" onclick="toggleSessionEdit()">✏️</button>
+        </div>
+        <div class="session-edit-box" id="session-edit-box">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="date" id="se-date" style="flex:1;font-size:12px;padding:6px 8px;"/>
+            <select id="se-gym" style="flex:1;font-size:12px;padding:6px 8px;"></select>
+            <button class="btn small primary" onclick="saveSessionEdit()">OK</button>
+          </div>
+        </div>
+      </div>
+      <div id="session-machines"></div>
+      <button class="btn action" style="margin-top:4px;" id="add-ex-btn" onclick="toggleAddExPanel()">+ Add exercise</button>
+      <div class="inline-popup" id="add-ex-panel">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">My exercise</div>
+        <div class="label">Select muscle group</div>
+        <div class="muscle-grid" id="muscle-grid-inline"></div>
+        <div id="ex-picker-wrap" style="display:none;">
+          <div class="label">Exercise</div>
+          <select id="ex-pick-inline" style="margin-bottom:10px;" onchange="checkAddNew()"></select>
+          <div id="new-ex-popup" class="inline-popup" style="margin-top:0;margin-bottom:10px;">
+            <div class="label">Exercise name</div>
+            <input id="new-ex-name" placeholder="e.g. Cable fly" style="margin-bottom:10px;"/>
+            <div class="label">Default sets</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <button class="counter-btn" onclick="changeNewExSets(-1)">−</button>
+              <span class="counter-val" id="new-ex-sets">4</span>
+              <button class="counter-btn" onclick="changeNewExSets(1)">+</button>
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <button class="btn small" onclick="cancelNewEx()">Cancel</button>
+              <button class="btn small primary" onclick="confirmNewEx()">Add exercise</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn small" onclick="closeAddExPanel()">Cancel</button>
+            <button class="btn small primary" onclick="addExToSession()">Add to session</button>
+          </div>
+        </div>
+      </div>
+      <div id="save-session-wrap" style="display:none;">
+        <button class="btn save-session" onclick="confirmSaveTraining()">Save training</button>
+      </div>
+      <button class="btn end-session" onclick="confirmEndTraining()">End training</button>
+    </div>
+
+    <!-- Home main -->
+    <div id="home-main">
+      <button class="btn dominant" onclick="openHomeTrainingPicker()">New training</button>
+      <div class="section-title">Recent trainings</div>
+      <div id="recent-trainings"></div>
+      <button id="show-more-btn" class="btn action" style="display:none;" onclick="showMoreTrainings()">Show more</button>
+    </div>
+  </div>
+
+  <!-- GYMS -->
+  <div id="tab-gyms" class="section">
+    <button class="btn dominant" onclick="openAddGymModal()">+ Add gym</button>
+    <div class="section-title">Your gyms</div>
+    <div id="gyms-list"></div>
+    <button id="gyms-show-more" class="btn action" style="display:none;" onclick="showMoreGyms()">Show more gyms</button>
+  </div>
+
+  <!-- LOG -->
+  <div id="tab-log" class="section">
+    <div id="log-gym-chips"></div>
+    <div id="log-content"></div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="tab-compare" class="section">
+    <div class="label">Machine type to compare</div>
+    <select id="compare-machine-select" onchange="renderCompare()" style="margin-bottom:14px;"></select>
+    <div id="compare-content"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="section">
+    <div class="section-title">Preferences</div>
+    <div class="card">
+      <div class="settings-row">
+        <div><div class="settings-label">Favourite gym</div><div class="settings-sub">Default for new trainings</div></div>
+        <select id="fav-gym-select" style="width:150px;" onchange="saveFavGym()"></select>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Weight unit</div><div class="settings-sub">Used across all logs</div></div>
+        <select id="unit-select" style="width:80px;" onchange="saveUnit()"><option>kg</option><option>lbs</option></select>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Date format</div><div class="settings-sub">EU: DD.MM.YYYY / US: MM/DD/YYYY</div></div>
+        <select id="datefmt-select" style="width:80px;" onchange="saveDateFmt()"><option value="EU">EU</option><option value="US">US</option></select>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Theme</div><div class="settings-sub">App colour scheme</div></div>
+        <div class="theme-switcher">
+          <div class="theme-dot t-default" onclick="setTheme('default',this)"></div>
+          <div class="theme-dot t-maxfitness" onclick="setTheme('maxfitness',this)"></div>
+          <div class="theme-dot t-formfactory" onclick="setTheme('formfactory',this)"></div>
+        </div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:6px;">Rest timers</div>
+    <div class="card" id="global-rest-config"></div>
+  </div>
+</div>
+
+<div id="global-modal" class="modal-overlay">
+  <div class="modal-box" id="global-modal-box"></div>
+</div>
+
+<div id="confirm-overlay" class="confirm-overlay" style="display:none;">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-actions">
+      <button class="btn" onclick="confirmNo()">Cancel</button>
+      <button class="btn primary" id="confirm-yes-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MUSCLES={
+  Chest:[{id:1,name:'Bench press',defaultSets:4},{id:101,name:'Incline bench press',defaultSets:4},{id:102,name:'Cable fly',defaultSets:3},{id:103,name:'Chest dip',defaultSets:3},{id:104,name:'Pec deck',defaultSets:3},{id:105,name:'Decline bench press',defaultSets:4},{id:106,name:'Dumbbell fly',defaultSets:3}],
+  Back:[{id:3,name:'Lat pulldown',defaultSets:4},{id:111,name:'Cable row',defaultSets:4},{id:112,name:'Seated row',defaultSets:4},{id:113,name:'Deadlift',defaultSets:4},{id:114,name:'T-bar row',defaultSets:4},{id:115,name:'Pull-up',defaultSets:3},{id:116,name:'Single-arm row',defaultSets:3}],
+  Legs:[{id:6,name:'Leg press',defaultSets:4},{id:121,name:'Squat rack',defaultSets:4},{id:122,name:'Leg curl',defaultSets:3},{id:123,name:'Leg extension',defaultSets:3},{id:124,name:'Hip thrust',defaultSets:4},{id:125,name:'Romanian deadlift',defaultSets:4},{id:126,name:'Calf raise',defaultSets:4}],
+  Shoulders:[{id:4,name:'Shoulder press',defaultSets:4},{id:131,name:'Lateral raise',defaultSets:3},{id:132,name:'Front raise',defaultSets:3},{id:133,name:'Rear delt fly',defaultSets:3},{id:134,name:'Arnold press',defaultSets:4},{id:135,name:'Face pull',defaultSets:3},{id:136,name:'Upright row',defaultSets:3}],
+  Biceps:[{id:10,name:'Barbell curl',defaultSets:4},{id:141,name:'Incline dumbbell curl',defaultSets:3},{id:142,name:'Hammer curl',defaultSets:3},{id:143,name:'Cable curl',defaultSets:3},{id:144,name:'Preacher curl',defaultSets:4},{id:145,name:'Concentration curl',defaultSets:3},{id:146,name:'Spider curl',defaultSets:3}],
+  Triceps:[{id:11,name:'Tricep pushdown',defaultSets:4},{id:151,name:'Skull crusher',defaultSets:4},{id:152,name:'Overhead extension',defaultSets:3},{id:153,name:'Tricep dip',defaultSets:3},{id:154,name:'Cable kickback',defaultSets:3},{id:155,name:'Close-grip bench press',defaultSets:4},{id:156,name:'Single-arm pushdown',defaultSets:3}],
+};
+
+const TEMPLATES={
+  top:['Bench press','Lat pulldown'],
+  bottom:['Leg press','Squat rack'],
+};
+
+let newExSets=4,selectedMuscle=null,confirmCb=null,timerInterval=null,activeTimer=null;
+let sessionDirty=false;
+
+const S={
+  gyms:[{id:1,name:'Fitness Park Letňany',location:'Prague'},{id:2,name:'World Class Palladium',location:'Prague'}],
+  machines:[
+    {id:1,gymId:1,name:'Bench press',type:'Bench press',muscle:'Chest'},
+    {id:2,gymId:1,name:'Squat rack',type:'Squat',muscle:'Legs'},
+    {id:3,gymId:1,name:'Lat pulldown',type:'Lat pulldown',muscle:'Back'},
+    {id:4,gymId:1,name:'Shoulder press',type:'Shoulder press',muscle:'Shoulders'},
+    {id:5,gymId:1,name:'Cable row',type:'Cable row',muscle:'Back'},
+    {id:6,gymId:1,name:'Leg press',type:'Leg press',muscle:'Legs'},
+    {id:7,gymId:2,name:'Bench press',type:'Bench press',muscle:'Chest'},
+    {id:8,gymId:2,name:'Leg press',type:'Leg press',muscle:'Legs'},
+    {id:9,gymId:2,name:'Lat pulldown',type:'Lat pulldown',muscle:'Back'},
+    {id:10,gymId:1,name:'Barbell curl',type:'Barbell curl',muscle:'Biceps'},
+    {id:11,gymId:1,name:'Tricep pushdown',type:'Tricep pushdown',muscle:'Triceps'},
+  ],
+  logs:[
+    {id:1,machineId:1,trainingId:1,sets:[{w:80,r:12},{w:80,r:10},{w:75,r:10},{w:70,r:8}],unit:'kg'},
+    {id:2,machineId:2,trainingId:1,sets:[{w:100,r:10},{w:100,r:8},{w:95,r:8},{w:90,r:6}],unit:'kg'},
+    {id:3,machineId:3,trainingId:1,sets:[{w:65,r:12},{w:65,r:10},{w:60,r:10},{w:60,r:8}],unit:'kg'},
+    {id:4,machineId:1,trainingId:2,sets:[{w:82,r:12},{w:82,r:10},{w:77,r:10},{w:72,r:8}],unit:'kg'},
+    {id:5,machineId:7,trainingId:3,sets:[{w:75,r:12},{w:75,r:10},{w:70,r:10},{w:65,r:8}],unit:'kg'},
+  ],
+  trainings:[
+    {id:1,gymId:1,date:'2025-04-12',machineIds:[1,2,3]},
+    {id:2,gymId:1,date:'2025-04-15',machineIds:[1,4,5,6]},
+    {id:3,gymId:2,date:'2025-04-17',machineIds:[7,8,9]},
+  ],
+  activeSession:null,openLogMid:null,
+  favGym:1,unit:'kg',dateFmt:'EU',theme:'default',
+  restConfig:[120,120,180],
+  shownTrainings:2,shownGyms:3,selectedLogGym:1,
+  setStates:{},
+  nid:{gym:3,machine:200,log:6,training:4,exc:300}
+};
+
+// ── UTILS ────────────────────────────────────────────────────
+function fmtDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return S.dateFmt==='EU'?`${d}.${m}.${y}`:`${m}/${d}/${y}`;}
+function today(){return new Date().toISOString().slice(0,10);}
+function daysAgo(iso){if(!iso)return'';const diff=Math.floor((Date.now()-new Date(iso).getTime())/86400000);if(diff===0)return'today';if(diff===1)return'yesterday';return`${diff} days ago`;}
+function gymName(id){const g=S.gyms.find(x=>x.id===id);return g?g.name:'?';}
+function getLastLog(mid){return S.logs.filter(l=>l.machineId===mid).sort((a,b)=>b.id-a.id)[0];}
+function getMaxW(log){return log?Math.max(...log.sets.map(s=>s.w)):null;}
+function lastSummary(mid){const log=getLastLog(mid);if(!log||!log.sets.length)return'No previous data';return log.sets.map(s=>`${s.w}${S.unit}(${s.r})`).join(' — ');}
+function getDefSets(mid){const m=S.machines.find(x=>x.id===mid);if(m&&m.defaultSets)return m.defaultSets;const found=Object.values(MUSCLES).flat().find(e=>e.name===m?.name);return found?found.defaultSets:4;}
+function getLastTrainingDate(gymId){const ts=S.trainings.filter(t=>t.gymId===gymId).sort((a,b)=>b.date.localeCompare(a.date));return ts[0]?.date||null;}
+function countTrainings(gymId){return S.trainings.filter(t=>t.gymId===gymId).length;}
+function markDirty(){sessionDirty=true;document.getElementById('save-session-wrap').style.display='block';}
+
+// ── CONFIRM ──────────────────────────────────────────────────
+function showConfirm(title,sub,yesLabel,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-sub').textContent=sub;
+  document.getElementById('confirm-yes-btn').textContent=yesLabel;
+  confirmCb=cb;
+  document.getElementById('confirm-overlay').style.display='flex';
+}
+function confirmNo(){document.getElementById('confirm-overlay').style.display='none';confirmCb=null;}
+function confirmYes(){document.getElementById('confirm-overlay').style.display='none';if(confirmCb){confirmCb();confirmCb=null;}}
+document.getElementById('confirm-yes-btn').onclick=confirmYes;
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(html){document.getElementById('global-modal-box').innerHTML=html;document.getElementById('global-modal').classList.add('open');document.getElementById('global-modal').style.display='flex';}
+function closeModal(){document.getElementById('global-modal').classList.remove('open');document.getElementById('global-modal').style.display='none';}
+
+// ── THEME ────────────────────────────────────────────────────
+function setTheme(name,dotEl){
+  S.theme=name;
+  document.documentElement.setAttribute('data-theme',name==='default'?'':name);
+  document.querySelectorAll('.theme-dot').forEach(d=>d.classList.remove('active'));
+  document.querySelectorAll('.theme-dot').forEach(d=>{if(d.classList.contains('t-'+name))d.classList.add('active');});
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['home','gyms','log','compare'][i]===name));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('tab-'+name);if(el)el.classList.add('active');
+  closeModal();
+  if(name==='home')renderHome();
+  if(name==='gyms')renderGyms();
+  if(name==='log'){S.selectedLogGym=S.selectedLogGym||S.favGym||S.gyms[0]?.id;renderLog();}
+  if(name==='compare')renderCompare();
+  if(name==='settings')renderSettings();
+}
+
+// ── HOME TRAINING FLOW ────────────────────────────────────────
+function openHomeTrainingPicker(){
+  document.getElementById('home-main').style.display='none';
+  const picker=document.getElementById('home-gym-picker');
+  picker.style.display='block';
+  document.getElementById('nt-gym').innerHTML=S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.favGym?'selected':''}>${g.name}</option>`).join('');
+}
+function closeHomePicker(){
+  document.getElementById('home-gym-picker').style.display='none';
+  document.getElementById('template-panel').style.display='none';
+  document.getElementById('home-main').style.display='block';
+}
+
+// called from both home picker and gym card
+function openTemplatePicker(gymIdOverride){
+  let gymId;
+  if(gymIdOverride!=null){
+    gymId=gymIdOverride;
+    // store pending gym for when template is chosen
+    S._pendingGymId=gymId;
+    S._pendingDate=today();
+    document.getElementById('home-main').style.display='none';
+  } else {
+    gymId=parseInt(document.getElementById('nt-gym').value);
+    S._pendingGymId=gymId;
+    S._pendingDate=today();
+    document.getElementById('home-gym-picker').style.display='none';
+  }
+  document.getElementById('template-panel').style.display='block';
+}
+
+function closeTemplatePicker(){
+  document.getElementById('template-panel').style.display='none';
+  // if came from gym card, just show home-main
+  document.getElementById('home-gym-picker').style.display='none';
+  document.getElementById('home-main').style.display='block';
+  S._pendingGymId=null;S._pendingDate=null;
+}
+
+function startWithTemplate(tplKey){
+  const gymId=S._pendingGymId||S.favGym||S.gyms[0]?.id;
+  const date=S._pendingDate||today();
+  const tid=S.nid.training++;
+  const training={id:tid,gymId,date,machineIds:[]};
+
+  if(tplKey!=='blank'){
+    const names=TEMPLATES[tplKey]||[];
+    names.forEach(name=>{
+      // find or create machine at this gym
+      let m=S.machines.find(x=>x.name===name&&x.gymId===gymId);
+      if(!m){
+        const base=Object.values(MUSCLES).flat().find(e=>e.name===name);
+        const newId=S.nid.machine++;
+        S.machines.push({id:newId,gymId,name,type:name,muscle:'',defaultSets:base?base.defaultSets:4});
+        m=S.machines.find(x=>x.id===newId);
+      }
+      if(!training.machineIds.includes(m.id))training.machineIds.push(m.id);
+    });
+  }
+
+  S.trainings.push(training);
+  S.activeSession={trainingId:tid,gymId,date};
+  S.setStates={};
+  sessionDirty=false;
+  S.openLogMid=null;
+
+  document.getElementById('template-panel').style.display='none';
+  document.getElementById('home-gym-picker').style.display='none';
+  document.getElementById('home-main').style.display='none';
+  document.getElementById('active-session').style.display='block';
+  document.getElementById('session-gym-title').textContent=gymName(gymId);
+  document.getElementById('session-date-title').textContent=fmtDate(date);
+  document.getElementById('session-edit-box').classList.remove('open');
+  document.getElementById('save-session-wrap').style.display='none';
+  closeAddExPanel();
+  renderSessionMachines();
+  switchTab('home');
+}
+
+function editTraining(tid){
+  const t=S.trainings.find(x=>x.id===tid);
+  S._pendingGymId=t.gymId;S._pendingDate=t.date;
+  // open session directly for existing training
+  S.activeSession={trainingId:tid,gymId:t.gymId,date:t.date};
+  S.setStates={};sessionDirty=false;S.openLogMid=null;
+  document.getElementById('home-main').style.display='none';
+  document.getElementById('active-session').style.display='block';
+  document.getElementById('session-gym-title').textContent=gymName(t.gymId);
+  document.getElementById('session-date-title').textContent=fmtDate(t.date);
+  document.getElementById('session-edit-box').classList.remove('open');
+  document.getElementById('save-session-wrap').style.display='none';
+  closeAddExPanel();
+  renderSessionMachines();
+  switchTab('home');
+}
+
+function toggleSessionEdit(){
+  const box=document.getElementById('session-edit-box');
+  if(!box.classList.contains('open')){
+    document.getElementById('se-date').value=S.activeSession.date;
+    document.getElementById('se-gym').innerHTML=S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.activeSession.gymId?'selected':''}>${g.name}</option>`).join('');
+    box.classList.add('open');
+  } else box.classList.remove('open');
+}
+function saveSessionEdit(){
+  const d=document.getElementById('se-date').value;
+  const gid=parseInt(document.getElementById('se-gym').value);
+  S.activeSession.date=d;S.activeSession.gymId=gid;
+  const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
+  if(t){t.date=d;t.gymId=gid;}
+  document.getElementById('session-gym-title').textContent=gymName(gid);
+  document.getElementById('session-date-title').textContent=fmtDate(d);
+  document.getElementById('session-edit-box').classList.remove('open');
+  markDirty();
+}
+
+function confirmSaveTraining(){
+  showConfirm('Save training?','Your sets and weights will be saved.','Save training',endSessionFlow);
+}
+function confirmEndTraining(){
+  if(sessionDirty){
+    showConfirm('End training?','Any unsaved changes will be kept. Are you sure?','End training',endSessionFlow);
+  } else {
+    endSessionFlow();
+  }
+}
+function endSessionFlow(){
+  S.activeSession=null;S.openLogMid=null;S.setStates={};sessionDirty=false;
+  document.getElementById('active-session').style.display='none';
+  document.getElementById('home-main').style.display='block';
+  renderHome();
+}
+
+// ── SESSION MACHINES ─────────────────────────────────────────
+function renderSessionMachines(){
+  if(!S.activeSession)return;
+  const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
+  if(!t)return;
+  const el=document.getElementById('session-machines');
+  if(!t.machineIds.length){el.innerHTML='<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:16px 0;">No exercises yet — add one below</div>';return;}
+  el.innerHTML=t.machineIds.map(mid=>{
+    const m=S.machines.find(x=>x.id===mid);if(!m)return'';
+    const isOpen=S.openLogMid===mid;
+    const isDone=S.setStates[mid+'_done']===true;
+    return `<div class="ex-card ${isDone?'all-done':''}" id="excard-${mid}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;min-width:0;margin-right:8px;">
+          <div class="ex-name">${m.name}</div>
+          <div class="ex-last">${lastSummary(mid)}</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+          <button class="btn icon danger" style="font-size:12px;padding:4px 6px;" onclick="confirmDeleteEx(${mid})">🗑</button>
+          <button class="btn small ${isOpen?'primary':''}" onclick="toggleSessionLog(${mid})">${isOpen?'Close':'Log'}</button>
+        </div>
+      </div>
+      <div class="inline-log ${isOpen?'open':''}" id="inline-log-${mid}"></div>
+    </div>`;
+  }).join('');
+  t.machineIds.forEach(mid=>{if(S.openLogMid===mid)renderInlineLog(mid,true);});
+}
+
+function confirmDeleteEx(mid){
+  showConfirm('Remove exercise?','This removes the exercise card and its sets from this training.','Delete',()=>{
+    const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
+    if(t)t.machineIds=t.machineIds.filter(id=>id!==mid);
+    S.logs=S.logs.filter(l=>!(l.machineId===mid&&l.trainingId===S.activeSession.trainingId));
+    if(S.openLogMid===mid)S.openLogMid=null;
+    delete S.setStates[mid+'_done'];
+    markDirty();
+    renderSessionMachines();
+  });
+}
+function toggleSessionLog(mid){S.openLogMid=S.openLogMid===mid?null:mid;renderSessionMachines();}
+
+// ── ADD EXERCISE PANEL ────────────────────────────────────────
+function toggleAddExPanel(){
+  const panel=document.getElementById('add-ex-panel');
+  if(panel.classList.contains('open')){closeAddExPanel();return;}
+  panel.classList.add('open');
+  document.getElementById('muscle-grid-inline').innerHTML=Object.keys(MUSCLES).map(m=>`<button class="muscle-btn" onclick="selectMuscleInline('${m}')">${m}</button>`).join('');
+  document.getElementById('ex-picker-wrap').style.display='none';
+  document.getElementById('new-ex-popup').classList.remove('open');
+  selectedMuscle=null;
+}
+function closeAddExPanel(){
+  document.getElementById('add-ex-panel').classList.remove('open');
+  document.getElementById('ex-picker-wrap').style.display='none';
+  selectedMuscle=null;
+}
+function selectMuscleInline(muscle){
+  selectedMuscle=muscle;
+  document.querySelectorAll('#muscle-grid-inline .muscle-btn').forEach(b=>b.classList.toggle('selected',b.textContent===muscle));
+  rebuildExDropdown(muscle);
+  document.getElementById('ex-picker-wrap').style.display='block';
+  document.getElementById('new-ex-popup').classList.remove('open');
+}
+function rebuildExDropdown(muscle){
+  const list=MUSCLES[muscle]||[];
+  document.getElementById('ex-pick-inline').innerHTML=list.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')+`<option value="__new__">+ Add new exercise...</option>`;
+}
+function checkAddNew(){
+  const val=document.getElementById('ex-pick-inline').value;
+  if(val==='__new__'){document.getElementById('new-ex-name').value='';newExSets=4;document.getElementById('new-ex-sets').textContent='4';document.getElementById('new-ex-popup').classList.add('open');}
+  else document.getElementById('new-ex-popup').classList.remove('open');
+}
+function changeNewExSets(d){newExSets=Math.max(1,Math.min(8,newExSets+d));document.getElementById('new-ex-sets').textContent=newExSets;}
+function cancelNewEx(){document.getElementById('new-ex-popup').classList.remove('open');if(selectedMuscle)rebuildExDropdown(selectedMuscle);}
+function confirmNewEx(){
+  const name=document.getElementById('new-ex-name').value.trim();
+  if(!name){alert('Please enter an exercise name.');return;}
+  const newId=S.nid.exc++;
+  MUSCLES[selectedMuscle].push({id:newId,name,defaultSets:newExSets});
+  document.getElementById('new-ex-popup').classList.remove('open');
+  rebuildExDropdown(selectedMuscle);
+  document.getElementById('ex-pick-inline').value=newId;
+}
+function addExToSession(){
+  const val=document.getElementById('ex-pick-inline').value;
+  if(!val||val==='__new__')return;
+  const mid=parseInt(val);
+  if(!S.activeSession)return;
+  const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);if(!t)return;
+  const gymId=S.activeSession.gymId;
+  let machine=S.machines.find(m=>m.id===mid&&m.gymId===gymId);
+  let finalId=mid;
+  if(!machine){
+    const base=Object.values(MUSCLES).flat().find(e=>e.id===mid)||S.machines.find(m=>m.id===mid);
+    if(base){
+      const dup=S.machines.find(m=>m.name===base.name&&m.gymId===gymId);
+      if(dup){finalId=dup.id;}
+      else{const newMid=S.nid.machine++;S.machines.push({id:newMid,gymId,name:base.name,type:base.name,muscle:selectedMuscle||'',defaultSets:base.defaultSets||4});finalId=newMid;}
+    }
+  }
+  if(!t.machineIds.includes(finalId))t.machineIds.push(finalId);
+  closeAddExPanel();
+  markDirty();
+  renderSessionMachines();
+}
+
+// ── INLINE LOG ────────────────────────────────────────────────
+function buildSetRows(mid,ns){
+  const last=getLastLog(mid);const defR=[12,10,10,8];let rows='';
+  for(let i=0;i<ns;i++){
+    const pW=last&&last.sets[i]?last.sets[i].w:'';
+    const pR=last&&last.sets[i]?last.sets[i].r:(defR[i]||8);
+    const done=S.setStates[`${mid}_${i}`]||false;
+    rows+=`<div class="set-row ${done?'done-row':''}" id="setrow-${mid}-${i}">
+      <div class="set-num">${i+1}</div>
+      <input type="number" id="w-${mid}-${i}" value="${pW}" placeholder="${S.unit}" min="0" step="2.5"/>
+      <input type="number" id="r-${mid}-${i}" value="${pR}" min="1"/>
+      <button class="done-btn ${done?'completed':''}" id="done-${mid}-${i}" onclick="toggleSetDone(${mid},${i},${ns})">✓</button>
+    </div>`;
+  }
+  return rows;
+}
+
+function renderInlineLog(mid,sessionMode){
+  const el=document.getElementById('inline-log-'+mid);if(!el)return;
+  const stored=document.getElementById('sets-count-'+mid);
+  const ns=stored?parseInt(stored.textContent):getDefSets(mid);
+  el.innerHTML=`
+    <div class="sets-counter">
+      <span style="font-size:13px;color:var(--text-secondary);font-weight:500;">Sets</span>
+      <button class="counter-btn" onclick="changeSets(${mid},-1,${sessionMode})">−</button>
+      <span class="counter-val" id="sets-count-${mid}">${ns}</span>
+      <button class="counter-btn" onclick="changeSets(${mid},1,${sessionMode})">+</button>
+      <span style="flex:1;"></span>
+      <button class="btn icon" onclick="toggleTimerCfg(${mid})" title="Rest timer settings">⏱</button>
+    </div>
+    <div class="timer-cfg" id="timer-cfg-${mid}">
+      ${S.restConfig.map((v,i)=>`
+      <div class="timer-cfg-row">
+        <div class="tdot ${['d1','d2','d3'][i]||'d1'}">${['1→2','2→3','3→4'][i]}</div>
+        <span style="font-size:13px;font-weight:500;flex:1;">Rest</span>
+        <div class="timer-sec-wrap"><input type="number" id="rc-${mid}-${i}" value="${v}" min="10" max="600" step="5"/><span>sec</span></div>
+      </div>`).join('')}
+      <div class="timer-actions">
+        <button class="btn small" onclick="saveTimerCfg(${mid})">Save</button>
+        <input type="number" id="setall-${mid}" placeholder="sec" min="10" max="600" step="5"/>
+        <button class="btn small" onclick="setAllTimers(${mid})">Set all</button>
+        <span></span>
+        <button class="btn icon" onclick="toggleTimerCfg(${mid})">✕</button>
+      </div>
+    </div>
+    <div id="timer-bar-${mid}" class="timer-bar hidden"></div>
+    <div class="sets-grid-hdr"><span>#</span><span>Weight (${S.unit})</span><span>Reps</span><span></span></div>
+    <div id="sets-rows-${mid}">${buildSetRows(mid,ns)}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn" onclick="${sessionMode?'toggleSessionLog':'toggleInlineLog'}(${mid})">Cancel</button>
+      <button class="btn primary" onclick="saveLog(${mid},${sessionMode},${ns})">Save</button>
+    </div>`;
+}
+
+function toggleTimerCfg(mid){document.getElementById('timer-cfg-'+mid).classList.toggle('open');}
+function saveTimerCfg(mid){S.restConfig=S.restConfig.map((_,i)=>parseInt(document.getElementById('rc-'+mid+'-'+i)?.value)||120);document.getElementById('timer-cfg-'+mid).classList.remove('open');}
+function setAllTimers(mid){const v=parseInt(document.getElementById('setall-'+mid).value);if(isNaN(v)||v<10)return;S.restConfig=S.restConfig.map(()=>v);S.restConfig.forEach((_,i)=>{const e=document.getElementById('rc-'+mid+'-'+i);if(e)e.value=v;});}
+function toggleInlineLog(mid){S.openLogMid=S.openLogMid===mid?null:mid;renderGyms();}
+function changeSets(mid,delta,sessionMode){const el=document.getElementById('sets-count-'+mid);let n=Math.max(1,Math.min(8,parseInt(el.textContent)+delta));el.textContent=n;document.getElementById('sets-rows-'+mid).innerHTML=buildSetRows(mid,n);}
+
+function toggleSetDone(mid,idx,total){
+  const key=`${mid}_${idx}`;const was=S.setStates[key]||false;S.setStates[key]=!was;
+  const row=document.getElementById('setrow-'+mid+'-'+idx);const btn=document.getElementById('done-'+mid+'-'+idx);
+  if(!was){row&&row.classList.add('done-row');btn&&btn.classList.add('completed');if(idx<total-1){const secs=S.restConfig[idx]??120;startTimer(mid,idx,secs);}}
+  else{row&&row.classList.remove('done-row');btn&&btn.classList.remove('completed');if(activeTimer&&activeTimer.mid===mid)skipTimer(mid);}
+}
+function checkAllDone(mid,total){for(let i=0;i<total;i++){if(!S.setStates[`${mid}_${i}`])return false;}return true;}
+
+function saveLog(mid,sessionMode,numSets){
+  const ns=numSets||parseInt(document.getElementById('sets-count-'+mid).textContent);
+  const sets=[];
+  for(let i=0;i<ns;i++){
+    const w=parseFloat(document.getElementById('w-'+mid+'-'+i).value);
+    const r=parseInt(document.getElementById('r-'+mid+'-'+i).value);
+    if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}
+    sets.push({w,r:isNaN(r)?10:r});
+  }
+  const tid=S.activeSession?S.activeSession.trainingId:null;
+  const existing=S.logs.find(l=>l.machineId===mid&&l.trainingId===tid);
+  if(existing){existing.sets=sets;existing.unit=S.unit;}
+  else S.logs.push({id:S.nid.log++,machineId:mid,trainingId:tid,sets,unit:S.unit});
+  // ── FIX: use the actual machine id (finalId) stored in training, not the library id
+  if(checkAllDone(mid,ns))S.setStates[mid+'_done']=true;
+  S.openLogMid=null;
+  markDirty();
+  if(sessionMode)renderSessionMachines();
+  else{renderGyms();renderLog();}
+}
+
+// ── TIMER ─────────────────────────────────────────────────────
+function startTimer(mid,fromSet,totalSecs){
+  if(timerInterval)clearInterval(timerInterval);
+  activeTimer={mid,fromSet,remaining:totalSecs,total:totalSecs};
+  updateTimerBar(mid);
+  timerInterval=setInterval(()=>{
+    if(!activeTimer){clearInterval(timerInterval);return;}
+    activeTimer.remaining--;
+    if(activeTimer.remaining<=0){clearInterval(timerInterval);activeTimer=null;const bar=document.getElementById('timer-bar-'+mid);if(bar){bar.classList.add('hidden');bar.innerHTML='';}}
+    else updateTimerBar(mid);
+  },1000);
+}
+function updateTimerBar(mid){
+  const bar=document.getElementById('timer-bar-'+mid);if(!bar||!activeTimer)return;
+  bar.classList.remove('hidden');
+  const r=activeTimer.remaining,t=activeTimer.total,mins=Math.floor(r/60),secs=r%60;
+  const circ=2*Math.PI*16,dash=Math.round((r/t)*circ*10)/10;
+  bar.innerHTML=`<svg width="36" height="36" viewBox="0 0 44 44" style="flex-shrink:0;">
+    <circle cx="22" cy="22" r="16" fill="none" stroke="var(--border)" stroke-width="3"/>
+    <circle cx="22" cy="22" r="16" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="${dash} ${Math.round(circ*10)/10}" stroke-dashoffset="${Math.round(circ/4*10)/10}" stroke-linecap="round"/>
+  </svg>
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:10px;color:var(--text-secondary);">Rest — set ${activeTimer.fromSet+1} done</div>
+    <div style="font-size:18px;font-weight:700;">${mins}:${String(secs).padStart(2,'0')}</div>
+  </div>
+  <button style="padding:4px 8px;font-size:15px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);cursor:pointer;flex-shrink:0;" onclick="restartTimer(${mid})" title="Restart">↺</button>
+  <button style="padding:4px 10px;font-size:12px;font-weight:500;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-secondary);cursor:pointer;flex-shrink:0;" onclick="skipTimer(${mid})">Skip</button>`;
+}
+function restartTimer(mid){if(!activeTimer)return;activeTimer.remaining=activeTimer.total;updateTimerBar(mid);}
+function skipTimer(mid){clearInterval(timerInterval);activeTimer=null;const bar=document.getElementById('timer-bar-'+mid);if(bar){bar.classList.add('hidden');bar.innerHTML='';}}
+
+// ── HOME ──────────────────────────────────────────────────────
+function renderHome(){
+  const trainings=[...S.trainings].sort((a,b)=>b.date.localeCompare(a.date));
+  const shown=trainings.slice(0,S.shownTrainings);
+  const remaining=trainings.length-S.shownTrainings;
+  const el=document.getElementById('recent-trainings');
+  if(!trainings.length){el.innerHTML='<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:20px 0;">No trainings yet</div>';return;}
+  el.innerHTML=shown.map(t=>{
+    const gym=S.gyms.find(g=>g.id===t.gymId);
+    const exs=t.machineIds.map(mid=>{
+      const m=S.machines.find(x=>x.id===mid);
+      const log=S.logs.find(l=>l.machineId===mid&&l.trainingId===t.id);
+      const sum=log?`${getMaxW(log)}${S.unit} · ${log.sets.length}x`:'—';
+      return `<div class="training-ex"><span>${m?m.name:'?'}</span><span style="color:var(--text-secondary);font-size:12px;">${sum}</span></div>`;
+    }).join('');
+    return `<div class="training-card">
+      <div class="training-hdr">
+        <div><div style="font-size:15px;font-weight:700;">${gym?gym.name:'?'}</div><div style="font-size:12px;color:var(--text-secondary);">${fmtDate(t.date)}</div></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn icon" onclick="editTraining(${t.id})">✏️</button>
+          <button class="btn icon danger" onclick="confirmDeleteTraining(${t.id})">✕</button>
+        </div>
+      </div>
+      <div class="training-body">${exs||'<span style="font-size:13px;color:var(--text-secondary);">No exercises logged</span>'}</div>
+    </div>`;
+  }).join('');
+  const smb=document.getElementById('show-more-btn');
+  smb.style.display=remaining>0?'block':'none';
+  if(remaining>0)smb.textContent=`Show more (${remaining})`;
+}
+function showMoreTrainings(){S.shownTrainings+=3;renderHome();}
+function confirmDeleteTraining(tid){
+  showConfirm('Delete training?','This will remove the training and all its logs.','Delete',()=>{
+    S.trainings=S.trainings.filter(t=>t.id!==tid);S.logs=S.logs.filter(l=>l.trainingId!==tid);renderHome();
+  });
+}
+
+// ── GYMS ──────────────────────────────────────────────────────
+function renderGyms(){
+  // sort by last training date descending
+  const sorted=[...S.gyms].sort((a,b)=>{
+    const da=getLastTrainingDate(a.id)||'0000-00-00';
+    const db=getLastTrainingDate(b.id)||'0000-00-00';
+    return db.localeCompare(da);
+  });
+  const shown=sorted.slice(0,S.shownGyms);
+  const remaining=sorted.length-S.shownGyms;
+  const el=document.getElementById('gyms-list');
+  el.innerHTML=shown.map(g=>{
+    const isFav=g.id===S.favGym;
+    const lastDate=getLastTrainingDate(g.id);
+    const count=countTrainings(g.id);
+    const machines=S.machines.filter(m=>m.gymId===g.id);
+    return `<div class="gym-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div>
+          <div class="gym-card-name">${g.name}</div>
+          <div class="gym-card-meta">${g.location} · ${count} training${count!==1?'s':''}</div>
+          ${lastDate?`<div class="gym-card-last">Last training: ${fmtDate(lastDate)} <span class="gym-card-days">(${daysAgo(lastDate)})</span></div>`:'<div class="gym-card-last" style="color:var(--text-hint);">No trainings yet</div>'}
+        </div>
+        <span class="badge ${isFav?'fav':''}" onclick="setFavGym(${g.id})">${isFav?'Favourite':'Set fav'}</span>
+      </div>
+      <button class="btn action primary" onclick="openTemplatePicker(${g.id})">New training</button>
+      <button class="btn action" onclick="openAddMachineModal(${g.id})" style="margin-bottom:0;">+ Add machine</button>
+    </div>`;
+  }).join('');
+  const smb=document.getElementById('gyms-show-more');
+  smb.style.display=remaining>0?'block':'none';
+  if(remaining>0)smb.textContent=`Show more gyms (${remaining})`;
+}
+function showMoreGyms(){S.shownGyms+=3;renderGyms();}
+function setFavGym(id){S.favGym=id;document.getElementById('active-gym-label').textContent='Favourite: '+gymName(id);renderGyms();if(document.getElementById('tab-settings').classList.contains('active'))renderSettings();}
+function toggleInlineLogGyms(mid){S.openLogMid=S.openLogMid===mid?null:mid;renderGyms();}
+
+function openAddGymModal(){
+  openModal(`<div class="modal-title">New gym</div>
+    <div class="label">Name</div><input id="ng-name" placeholder="e.g. Holmes Place" style="margin-bottom:10px;"/>
+    <div class="label">Location</div><input id="ng-loc" placeholder="e.g. Prague" style="margin-bottom:16px;"/>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="doAddGym()">Add</button>
+    </div>`);
+}
+function doAddGym(){
+  const name=document.getElementById('ng-name').value.trim();const loc=document.getElementById('ng-loc').value.trim();
+  if(!name)return;S.gyms.push({id:S.nid.gym++,name,location:loc||'—'});closeModal();renderGyms();
+}
+function openAddMachineModal(gymId){
+  openModal(`<div class="modal-title">New machine</div>
+    <div class="label">Name</div><input id="nm-name" placeholder="e.g. Leg press (Hammer)" style="margin-bottom:10px;"/>
+    <div class="label">Type (for comparison)</div><input id="nm-type" placeholder="e.g. Leg press" style="margin-bottom:16px;"/>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="doAddMachine(${gymId})">Add</button>
+    </div>`);
+}
+function doAddMachine(gymId){
+  const name=document.getElementById('nm-name').value.trim();const type=document.getElementById('nm-type').value.trim();
+  if(!name)return;S.machines.push({id:S.nid.machine++,gymId,name,type:type||name,muscle:''});closeModal();renderGyms();
+}
+
+// ── LOG ───────────────────────────────────────────────────────
+function renderLog(){
+  const gymId=S.selectedLogGym||S.favGym||S.gyms[0]?.id;S.selectedLogGym=gymId;
+  const chips=`<div class="section-title">Select gym</div>
+    <div style="display:flex;flex-wrap:wrap;margin-bottom:12px;">
+      ${S.gyms.map(g=>`<button class="gym-chip ${g.id===gymId?'selected':''}" onclick="selectLogGym(${g.id})">${g.name}</button>`).join('')}
+    </div>`;
+  const machines=S.machines.filter(m=>m.gymId===gymId);
+  const cards=machines.map(m=>{
+    const logs=S.logs.filter(l=>l.machineId===m.id).sort((a,b)=>b.id-a.id);
+    const entries=logs.map(l=>{
+      const t=S.trainings.find(x=>x.id===l.trainingId);const ds=t?fmtDate(t.date):'—';const reps=l.sets.map(s=>s.r).join('-');
+      return `<div class="log-entry">
+        <span style="color:var(--text-secondary);min-width:58px;font-size:12px;">${ds}</span>
+        <span style="font-weight:600;min-width:40px;">${getMaxW(l)}${S.unit}</span>
+        <span style="font-size:12px;color:var(--text-secondary);flex:1;">${l.sets.length}x [${reps}]</span>
+        <button class="btn icon" onclick="openEditLog(${l.id})">✏️</button>
+        <button class="btn icon danger" onclick="confirmDeleteLog(${l.id})">✕</button>
+      </div>`;
+    }).join('');
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:14px;font-weight:700;">${m.name}</div>
+        <button class="btn small primary" onclick="openAddLog(${m.id})">+ Add log</button>
+      </div>
+      ${entries||'<div style="font-size:13px;color:var(--text-secondary);">No logs yet</div>'}
+    </div>`;
+  }).join('')||'<div style="text-align:center;color:var(--text-secondary);padding:24px 0;font-size:14px;">No machines at this gym</div>';
+  document.getElementById('log-gym-chips').innerHTML=chips;
+  document.getElementById('log-content').innerHTML=cards;
+}
+function selectLogGym(id){S.selectedLogGym=id;renderLog();}
+function confirmDeleteLog(id){showConfirm('Delete log?','This set log will be permanently removed.','Delete',()=>{S.logs=S.logs.filter(l=>l.id!==id);renderLog();});}
+function openEditLog(logId){
+  const log=S.logs.find(l=>l.id===logId);if(!log)return;
+  const rows=log.sets.map((s,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:6px;">
+    <div class="set-num">${i+1}</div>
+    <input type="number" id="ew-${i}" value="${s.w}" step="2.5" style="text-align:center;padding:6px 4px;"/>
+    <input type="number" id="er-${i}" value="${s.r}" style="text-align:center;padding:6px 4px;"/>
+  </div>`).join('');
+  openModal(`<div class="modal-title">Edit log</div>
+    <div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:8px;"><span></span>
+      <span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Weight (${S.unit})</span>
+      <span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Reps</span>
+    </div>${rows}
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveEditLog(${logId},${log.sets.length})">Save</button>
+    </div>`);
+}
+function saveEditLog(logId,n){
+  const log=S.logs.find(l=>l.id===logId);const sets=[];
+  for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('ew-'+i).value);const r=parseInt(document.getElementById('er-'+i).value);if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});}
+  log.sets=sets;closeModal();renderLog();
+}
+function openAddLog(machineId){
+  const last=getLastLog(machineId);const n=last?last.sets.length:4;const defR=[12,10,10,8];
+  const rows=Array.from({length:n},(_,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:6px;">
+    <div class="set-num">${i+1}</div>
+    <input type="number" id="aw-${i}" value="${last&&last.sets[i]?last.sets[i].w:''}" placeholder="${S.unit}" step="2.5" style="text-align:center;padding:6px 4px;"/>
+    <input type="number" id="ar-${i}" value="${last&&last.sets[i]?last.sets[i].r:(defR[i]||8)}" style="text-align:center;padding:6px 4px;"/>
+  </div>`).join('');
+  openModal(`<div class="modal-title">Add log</div>
+    <div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:8px;"><span></span>
+      <span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Weight (${S.unit})</span>
+      <span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Reps</span>
+    </div>${rows}
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="doAddLog(${machineId},${n})">Save</button>
+    </div>`);
+}
+function doAddLog(machineId,n){
+  const sets=[];
+  for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('aw-'+i).value);const r=parseInt(document.getElementById('ar-'+i).value);if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});}
+  S.logs.push({id:S.nid.log++,machineId,trainingId:null,sets,unit:S.unit});closeModal();renderLog();
+}
+
+// ── COMPARE ───────────────────────────────────────────────────
+function renderCompare(){
+  const types=[...new Set(S.machines.map(m=>m.type))].sort();
+  const sel=document.getElementById('compare-machine-select');const cur=sel.value;
+  sel.innerHTML='<option value="">Select a machine...</option>'+types.map(t=>`<option value="${t}" ${t===cur?'selected':''}>${t}</option>`).join('');
+  const content=document.getElementById('compare-content');const chosen=sel.value;if(!chosen){content.innerHTML='';return;}
+  const html=S.gyms.map(g=>{
+    const ms=S.machines.filter(m=>m.gymId===g.id&&m.type===chosen);if(!ms.length)return'';
+    return`<div class="card"><div class="section-title">${g.name}</div>
+      ${ms.map(m=>{
+        const logs=S.logs.filter(l=>l.machineId===m.id).sort((a,b)=>b.id-a.id);const last=logs[0];
+        if(!last)return`<div class="compare-entry"><span>${m.name}</span><span style="font-size:12px;color:var(--text-secondary);">No data</span></div>`;
+        const mxW=getMaxW(last);const bestLog=logs.reduce((a,b)=>getMaxW(a)>getMaxW(b)?a:b,logs[0]);const reps=last.sets.map(s=>s.r).join('-');
+        return`<div class="compare-entry"><div><div style="font-size:14px;font-weight:600;">${m.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">Best: ${getMaxW(bestLog)}${S.unit} · [${reps}]</div></div>
+          <span class="weight-pill">${mxW}${S.unit}</span></div>`;
+      }).join('')}
+    </div>`;
+  }).join('')||'<div style="text-align:center;color:var(--text-secondary);padding:24px 0;">No data yet</div>';
+  content.innerHTML=html;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('fav-gym-select').innerHTML=`<option value="">— none —</option>`+S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.favGym?'selected':''}>${g.name}</option>`).join('');
+  document.getElementById('unit-select').value=S.unit;
+  document.getElementById('datefmt-select').value=S.dateFmt;
+  document.getElementById('global-rest-config').innerHTML=S.restConfig.map((v,i)=>`
+    <div class="settings-row">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="tdot ${['d1','d2','d3'][i]}">${['1→2','2→3','3→4'][i]}</div>
+        <div class="settings-label">Rest</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="number" id="grc-${i}" value="${v}" min="10" max="600" step="5" style="width:72px;text-align:center;" onchange="saveGlobalRest()"/>
+        <span style="font-size:12px;color:var(--text-secondary);">sec</span>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.classList.contains('t-'+S.theme)));
+}
+function saveFavGym(){const v=document.getElementById('fav-gym-select').value;S.favGym=v?parseInt(v):null;document.getElementById('active-gym-label').textContent=S.favGym?'Favourite: '+gymName(S.favGym):'No favourite gym set';}
+function saveUnit(){S.unit=document.getElementById('unit-select').value;}
+function saveDateFmt(){S.dateFmt=document.getElementById('datefmt-select').value;}
+function saveGlobalRest(){S.restConfig=S.restConfig.map((_,i)=>parseInt(document.getElementById('grc-'+i).value)||120);}
+
+// ── INIT ──────────────────────────────────────────────────────
+renderHome();
+renderGyms();
+const g0=S.gyms.find(x=>x.id===S.favGym);
+if(g0)document.getElementById('active-gym-label').textContent='Favourite: '+g0.name;
+setTheme('default',document.querySelector('.theme-dot.t-default'));
+</script>
+</body>
+</html>
