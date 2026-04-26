@@ -301,6 +301,25 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
 .settings-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;}
 
 /* ═══ MODALS ═══ */
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text-primary);color:var(--bg-primary);padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:500;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;max-width:320px;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.error{background:var(--danger);color:#fff;}
+
+/* QUICK-ADD TOGGLE */
+.qa-wrap{display:none;margin-top:4px;margin-bottom:2px;}
+.qa-wrap.visible{display:flex;align-items:center;gap:6px;}
+.qa-mode-btn{position:relative;width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0;transition:transform 0.15s;}
+.qa-mode-btn:active{transform:scale(0.93);}
+.qa-mode-btn.add{background:#e8422a;color:#fff;}
+.qa-mode-btn.sub{background:#2a6ee8;color:#fff;}
+.qa-mode-corner{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;border:1.5px solid var(--bg-primary);cursor:pointer;z-index:2;}
+.qa-mode-corner.to-sub{background:#2a6ee8;color:#fff;}
+.qa-mode-corner.to-add{background:#e8422a;color:#fff;}
+.qa-plates{display:flex;gap:3px;flex:1;}
+.qa-plate{flex:1;padding:5px 2px;font-size:11px;font-weight:700;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;text-align:center;font-family:monospace;transition:all 0.1s;}
+.qa-plate:active{transform:scale(0.95);}
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;animation:fadeIn 0.2s;}
 .confirm-box{background:var(--bg-elev);border:1px solid var(--hairline);border-radius:var(--radius);padding:22px;width:100%;max-width:320px;box-shadow:var(--shadow-lg);animation:popIn 0.25s cubic-bezier(.4,0,.2,1);}
 @keyframes popIn{from{opacity:0;transform:scale(0.94) translateY(8px);}to{opacity:1;transform:none;}}
@@ -375,10 +394,15 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
         </div>
         <div class="session-duration-chip" id="session-duration-display">0 min</div>
         <div class="session-edit-box" id="session-edit-box">
-          <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
             <input type="date" id="se-date" style="flex:1;font-size:12px;padding:6px 8px;"/>
             <select id="se-gym" style="flex:1;font-size:12px;padding:6px 8px;"></select>
             <button class="btn small primary" onclick="saveSessionEdit()">OK</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;color:var(--text-secondary);white-space:nowrap;">Body weight</span>
+            <input type="number" id="se-bodyweight" placeholder="optional" step="0.1" min="30" max="250" style="width:100px;font-size:12px;padding:6px 8px;"/>
+            <span style="font-size:11px;color:var(--text-hint);">kg</span>
           </div>
         </div>
       </div>
@@ -485,6 +509,7 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
   </div>
 </div>
 
+<div id="toast-el" class="toast"></div>
 <div id="global-modal" class="modal-overlay">
   <div class="modal-box" id="global-modal-box"></div>
 </div>
@@ -601,7 +626,7 @@ let sessionDirty=false;
 let sessionStartTime=null,sessionDurationSec=0,durationInterval=null;
 let selectedMuscles=new Set(),selectedExIds=new Set(),newExTargetMuscle=null;
 let dragMid=null,dragGroupMuscle=null;
-let activeQuickAddMid=null,activeQuickAddIdx=null;
+let activeQuickAddMid=null,activeQuickAddIdx=null,qaSubMode=false;
 let filterNetworks=new Set(),filterCities=new Set();
 
 // ── PERSISTENCE ──────────────────────────────────────────────
@@ -759,6 +784,12 @@ function hideQuickAdd(){
     if(row)row.classList.remove('visible');
     activeQuickAddMid=null;activeQuickAddIdx=null;
   }
+  // Also sync all qa buttons to current mode
+  document.querySelectorAll('.qa-mode-btn').forEach(b=>{
+    b.className='qa-mode-btn '+(qaSubMode?'sub':'add');
+    const c=b.querySelector('.qa-mode-corner');
+    if(c)c.className='qa-mode-corner '+(qaSubMode?'to-add':'to-sub');
+  });
 }
 function handleWeightFocus(mid,idx){
   const input=document.getElementById(`w-${mid}-${idx}`);
@@ -767,13 +798,20 @@ function handleWeightFocus(mid,idx){
   hideQuickAdd();
   activeQuickAddMid=mid;activeQuickAddIdx=idx;
   const row=document.getElementById(`qa-row-${mid}-${idx}`);
-  if(row)row.classList.add('visible');
+  if(row){
+    row.classList.add('visible');
+    // Sync mode button to current qaSubMode
+    const mb=row.querySelector('.qa-mode-btn');
+    if(mb){mb.className='qa-mode-btn '+(qaSubMode?'sub':'add');const c=mb.querySelector('.qa-mode-corner');if(c)c.className='qa-mode-corner '+(qaSubMode?'to-add':'to-sub');}
+  }
 }
-function quickAdd(mid,idx,amount){
+function quickAdd(mid,idx,amount,subtract){
   const input=document.getElementById(`w-${mid}-${idx}`);
   if(!input)return;
   const cur=parseFloat(input.value)||0;
-  input.value=Math.round((cur+amount)*10)/10;
+  const delta=subtract?-amount:amount;
+  input.value=Math.max(0,Math.round((cur+delta)*10)/10);
+  updateLiveSummary(mid);
 }
 
 // ── DURATION TIMER ────────────────────────────────────────────
@@ -844,7 +882,7 @@ function launchSession(tid,gymId,date,existingDuration){
   document.getElementById('session-duration-display').textContent=fmtDuration(sessionDurationSec);
   document.getElementById('session-edit-box').classList.remove('open');
   document.getElementById('save-session-wrap').style.display='none';
-  document.getElementById('resume-btn-wrap').style.display='none';
+  const _rbw=document.getElementById('resume-btn-wrap');if(_rbw)_rbw.style.display='none';
   closeAddExPanel();stopDurationTimer();
   // Only auto-start timer for new trainings (existingDuration==0), not when editing
   if(sessionDurationSec===0)startDurationTimer();
@@ -855,12 +893,12 @@ function editTraining(tid){
   const t=S.trainings.find(x=>x.id===tid);
   if(!t)return;
   launchSession(tid,t.gymId,t.date,t.duration||0);
-  document.getElementById('resume-btn-wrap').style.display='flex';
+  const _rbw2=document.getElementById('resume-btn-wrap');if(_rbw2)_rbw2.style.display='flex';
 }
 
 function confirmResumeTraining(){
   showConfirm('Resume this training?','The timer will continue from where you left off. You can add more exercises and sets.','Resume',()=>{
-    document.getElementById('resume-btn-wrap').style.display='none';
+    const _rbw=document.getElementById('resume-btn-wrap');if(_rbw)_rbw.style.display='none';
     sessionDirty=true;
     document.getElementById('save-session-wrap').style.display='block';
     startDurationTimer();
@@ -869,17 +907,23 @@ function confirmResumeTraining(){
 
 function toggleSessionEdit(){
   const box=document.getElementById('session-edit-box');
+  if(!box)return;
   if(!box.classList.contains('open')){
-    document.getElementById('se-date').value=S.activeSession.date;
-    document.getElementById('se-gym').innerHTML=S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.activeSession.gymId?'selected':''}>${g.name}</option>`).join('');
+    const seDate=document.getElementById('se-date');
+    const seGym=document.getElementById('se-gym');
+    const seBw=document.getElementById('se-bodyweight');
+    if(seDate)seDate.value=S.activeSession.date;
+    if(seGym)seGym.innerHTML=S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.activeSession.gymId?'selected':''}>${g.name}</option>`).join('');
     const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
-    document.getElementById('se-bodyweight').value=t&&t.bodyWeight?t.bodyWeight:'';
+    if(seBw)seBw.value=t&&t.bodyWeight?t.bodyWeight:'';
     box.classList.add('open');
+    setTimeout(()=>box.scrollIntoView({behavior:'smooth',block:'nearest'}),80);
   } else box.classList.remove('open');
 }
 function saveSessionEdit(){
-  const d=document.getElementById('se-date').value;const gid=document.getElementById('se-gym').value;
-  const bw=parseFloat(document.getElementById('se-bodyweight').value)||null;
+  const d=document.getElementById('se-date')?.value||S.activeSession.date;
+  const gid=document.getElementById('se-gym')?.value||S.activeSession.gymId;
+  const bw=parseFloat(document.getElementById('se-bodyweight')?.value)||null;
   S.activeSession.date=d;S.activeSession.gymId=gid;
   const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
   if(t){t.date=d;t.gymId=gid;if(bw)t.bodyWeight=bw;else delete t.bodyWeight;}
@@ -898,6 +942,42 @@ function endSessionFlow(){
   document.getElementById('active-session').style.display='none';document.getElementById('home-main').style.display='block';renderHome();
 }
 
+
+
+function toggleQaMode(){
+  qaSubMode=!qaSubMode;
+  // Update all visible qa-wrap mode buttons
+  document.querySelectorAll('.qa-mode-btn').forEach(b=>{
+    b.className='qa-mode-btn '+(qaSubMode?'sub':'add');
+    b.querySelector('.qa-mode-corner').className='qa-mode-corner '+(qaSubMode?'to-add':'to-sub');
+    b.title=qaSubMode?'Subtracting weight':'Adding weight';
+  });
+}
+// ── LIVE SUMMARY ─────────────────────────────────────────────
+function getLiveSummary(mid){
+  // Try to read current input values from open log panel
+  const ns=parseInt(document.getElementById('sets-count-'+mid)?.textContent)||0;
+  if(!ns) return lastSummary(mid);
+  const parts=[];
+  for(let i=0;i<ns;i++){
+    const wEl=document.getElementById('w-'+mid+'-'+i);
+    const rEl=document.getElementById('r-'+mid+'-'+i);
+    const w=wEl?parseFloat(wEl.value):null;
+    const r=rEl?parseInt(rEl.value):null;
+    const done=S.setStates[`${mid}_${i}`]||false;
+    if(w!=null&&!isNaN(w)){
+      parts.push({w,r:isNaN(r)?'?':r,done});
+    }
+  }
+  if(!parts.length) return lastSummary(mid);
+  return parts.map(p=>`<span style="color:${p.done?'var(--success-text)':'var(--text-secondary)'}">${p.w}${S.unit}(${p.r})</span>`).join('<span style="color:var(--text-hint)"> — </span>');
+}
+
+function updateLiveSummary(mid){
+  const el=document.getElementById('ex-last-'+mid);
+  if(!el)return;
+  el.innerHTML=getLiveSummary(mid);
+}
 // ── SESSION MACHINES ─────────────────────────────────────────
 function renderSessionMachines(){
   if(!S.activeSession)return;
@@ -913,7 +993,7 @@ function renderSessionMachines(){
         <div style="display:flex;justify-content:space-between;align-items:flex-start;" id="excard-body-${mid}">
           <div style="flex:1;min-width:0;margin-right:8px;">
             <div class="ex-name">${m.name}</div>
-            <div class="ex-last">${lastSummary(mid)}</div>
+            <div class="ex-last" id="ex-last-${mid}">${lastSummary(mid)}</div>
           </div>
           <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
             <button class="btn danger-icon" style="padding:3px 5px;font-size:12px;" onclick="confirmDeleteEx(${mid})">🗑</button>
@@ -1006,7 +1086,12 @@ function confirmDeleteEx(mid){
     if(S.openLogMid===mid)S.openLogMid=null;delete S.setStates[mid+'_done'];markDirty();saveState();renderSessionMachines();
   });
 }
-function toggleSessionLog(mid){S.openLogMid=S.openLogMid===mid?null:mid;renderSessionMachines();}
+function toggleSessionLog(mid){
+  const wasOpen=S.openLogMid===mid;
+  S.openLogMid=wasOpen?null:mid;
+  renderSessionMachines();
+  if(!wasOpen){setTimeout(()=>{const el=document.getElementById('excard-'+mid);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
+}
 
 // ── EXERCISE PICKER ───────────────────────────────────────────
 function toggleAddExPanel(){
@@ -1016,6 +1101,7 @@ function toggleAddExPanel(){
   panel.classList.add('open');renderMuscleButtons();
   document.getElementById('ex-buttons-area').innerHTML='';
   document.getElementById('add-new-ex-form').classList.remove('open');
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),80);
 }
 function closeAddExPanel(){document.getElementById('add-ex-panel').classList.remove('open');selectedMuscles=new Set();selectedExIds=new Set();}
 function renderMuscleButtons(){document.getElementById('muscle-grid-inline').innerHTML=Object.keys(MUSCLES).map(m=>`<button class="muscle-btn ${selectedMuscles.has(m)?'selected':''}" onclick="toggleMuscle('${m}')">${m}</button>`).join('');}
@@ -1029,7 +1115,7 @@ function openAddNewEx(muscle){newExTargetMuscle=muscle;document.getElementById('
 function cancelNewEx(){document.getElementById('add-new-ex-form').classList.remove('open');newExTargetMuscle=null;}
 function changeNewExSets(d){newExSets=Math.max(1,Math.min(8,newExSets+d));document.getElementById('new-ex-sets').textContent=newExSets;}
 function confirmNewEx(){
-  const name=document.getElementById('new-ex-name').value.trim();if(!name){alert('Please enter an exercise name.');return;}
+  const name=document.getElementById('new-ex-name').value.trim();if(!name){showToast('Please enter an exercise name.',true);return;}
   const newId=S.nid.exc++;const muscle=newExTargetMuscle||[...selectedMuscles][0]||'Chest';
   MUSCLES[muscle].push({id:newId,name,defaultSets:newExSets,defaultWeight:0});
   selectedExIds.add(newId);document.getElementById('add-new-ex-form').classList.remove('open');newExTargetMuscle=null;renderExerciseButtons();
@@ -1057,24 +1143,35 @@ function addSelectedExToSession(){
 function buildSetRows(mid,ns){
   const last=getLastLog(mid);const defR=[12,10,10,8];const defW=getDefWeight(mid);let rows='';
   for(let i=0;i<ns;i++){
-    const pW=last&&last.sets[i]?last.sets[i].w:defW;const pR=last&&last.sets[i]?last.sets[i].r:(defR[i]||8);
+    const pW=last&&last.sets[i]?last.sets[i].w:defW;
+    const pR=last&&last.sets[i]?last.sets[i].r:(defR[i]||8);
     const done=S.setStates[`${mid}_${i}`]||false;
-    rows+=`<div class="set-row ${done?'done-row':''}" id="setrow-${mid}-${i}">
-      <div class="set-num">${i+1}</div>
-      <div style="display:flex;flex-direction:column;gap:0;">
+    const wColor=done?'color:var(--success-text);':'';
+    const rColor=done?'color:var(--success-text);':'color:var(--text-secondary);';
+    rows+=`<div id="setrow-wrap-${mid}-${i}">
+      <div class="set-row ${done?'done-row':''}" id="setrow-${mid}-${i}">
+        <div class="set-num" style="${done?'color:var(--success-text);':''}">${i+1}</div>
         <input type="number" id="w-${mid}-${i}" value="${pW}" placeholder="${S.unit}" min="0" step="2.5"
+          style="text-align:center;padding:6px 2px;font-size:13px;${wColor}"
           onclick="handleWeightFocus(${mid},${i})"
           onfocus="handleWeightFocus(${mid},${i})"
+          oninput="updateLiveSummary(${mid})"
           onblur="setTimeout(()=>{if(activeQuickAddMid===${mid}&&activeQuickAddIdx===${i})hideQuickAdd();},200)"/>
-        <div class="quick-add-row" id="qa-row-${mid}-${i}">
-          <span class="quick-add-label">+</span>
-          <div class="quick-add-btns">
-            ${[2.5,5,10,20].map(v=>`<button class="quick-add-btn" onmousedown="event.preventDefault();" onclick="quickAdd(${mid},${i},${v})">${v}</button>`).join('')}
-          </div>
+        <input type="number" id="r-${mid}-${i}" value="${pR}" min="1"
+          oninput="updateLiveSummary(${mid})"
+          style="text-align:center;padding:6px 2px;font-size:13px;${rColor}"/>
+        <button class="done-btn ${done?'completed':''}" id="done-${mid}-${i}"
+          onclick="toggleSetDone(${mid},${i},${ns})">${done?'💪':'🦾'}</button>
+      </div>
+      <div class="qa-wrap" id="qa-row-${mid}-${i}">
+        <button class="qa-mode-btn add" onclick="toggleQaMode()" title="Adding weight">
+          <span style="font-size:16px;">+</span>
+          <span class="qa-mode-corner to-sub">−</span>
+        </button>
+        <div class="qa-plates">
+          ${[2.5,5,10,20].map(v=>`<button class="qa-plate" onmousedown="event.preventDefault();" onclick="quickAdd(${mid},${i},${v},qaSubMode)">${v}</button>`).join('')}
         </div>
       </div>
-      <input type="number" id="r-${mid}-${i}" value="${pR}" min="1"/>
-      <button class="done-btn ${done?'completed':''}" id="done-${mid}-${i}" onclick="toggleSetDone(${mid},${i},${ns})">✓</button>
     </div>`;
   }
   return rows;
@@ -1116,28 +1213,68 @@ function toggleRestTimer(cb){restTimerEnabled=cb.checked;}
 function toggleTimerCfg(mid){document.getElementById('timer-cfg-'+mid).classList.toggle('open');}
 function saveTimerCfg(mid){S.restConfig=S.restConfig.map((_,i)=>parseInt(document.getElementById('rc-'+mid+'-'+i)?.value)||120);document.getElementById('timer-cfg-'+mid).classList.remove('open');}
 function setAllTimers(mid){const v=parseInt(document.getElementById('setall-'+mid).value);if(isNaN(v)||v<10)return;S.restConfig=S.restConfig.map(()=>v);S.restConfig.forEach((_,i)=>{const e=document.getElementById('rc-'+mid+'-'+i);if(e)e.value=v;});}
-function toggleInlineLog(mid){S.openLogMid=S.openLogMid===mid?null:mid;renderGyms();}
-function changeSets(mid,delta){const el=document.getElementById('sets-count-'+mid);let n=Math.max(1,Math.min(8,parseInt(el.textContent)+delta));el.textContent=n;document.getElementById('sets-rows-'+mid).innerHTML=buildSetRows(mid,n);}
+function toggleInlineLog(mid){
+  const wasOpen=S.openLogMid===mid;
+  S.openLogMid=wasOpen?null:mid;renderGyms();
+  if(!wasOpen){setTimeout(()=>{const el=document.getElementById('inline-log-'+mid);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
+}
+function changeSets(mid,delta){const el=document.getElementById('sets-count-'+mid);let n=Math.max(1,Math.min(8,parseInt(el.textContent)+delta));el.textContent=n;document.getElementById('sets-rows-'+mid).innerHTML=buildSetRows(mid,n);updateLiveSummary(mid);}
 
 function toggleSetDone(mid,idx,total){
   const key=`${mid}_${idx}`;const was=S.setStates[key]||false;S.setStates[key]=!was;
-  const row=document.getElementById('setrow-'+mid+'-'+idx);const btn=document.getElementById('done-'+mid+'-'+idx);
-  if(!was){row&&row.classList.add('done-row');btn&&btn.classList.add('completed');if(restTimerEnabled&&idx<total-1){const secs=S.restConfig[idx]??120;startTimer(mid,idx,secs);}}
-  else{row&&row.classList.remove('done-row');btn&&btn.classList.remove('completed');if(activeTimer&&activeTimer.mid===mid)skipTimer(mid);}
+  const row=document.getElementById('setrow-'+mid+'-'+idx);
+  const btn=document.getElementById('done-'+mid+'-'+idx);
+  const wInput=document.getElementById('w-'+mid+'-'+idx);
+  const rInput=document.getElementById('r-'+mid+'-'+idx);
+  if(!was){
+    row&&row.classList.add('done-row');
+    btn&&btn.classList.add('completed');
+    if(btn)btn.textContent='💪';
+    if(wInput)wInput.style.color='var(--success-text)';
+    if(rInput)rInput.style.color='var(--success-text)';
+    if(restTimerEnabled&&idx<total-1){const secs=S.restConfig[idx]??120;startTimer(mid,idx,secs);}
+  } else {
+    row&&row.classList.remove('done-row');
+    btn&&btn.classList.remove('completed');
+    if(btn)btn.textContent='🦾';
+    if(wInput)wInput.style.color='';
+    if(rInput)rInput.style.color='';
+    if(activeTimer&&activeTimer.mid===mid)skipTimer(mid);
+  }
+  // When all done: card green, all text back to normal (card colour signals completion)
+  const allDone=checkAllDone(mid,total);
+  if(allDone){
+    S.setStates[mid+'_done']=true;
+    // Reset individual set text colour — card green is the signal
+    for(let i=0;i<total;i++){
+      const w=document.getElementById('w-'+mid+'-'+i);
+      const r=document.getElementById('r-'+mid+'-'+i);
+      const b=document.getElementById('done-'+mid+'-'+i);
+      if(w)w.style.color='';if(r)r.style.color='';
+      if(b){b.classList.add('completed');b.textContent='💪';}
+    }
+  } else {
+    delete S.setStates[mid+'_done'];
+  }
+  // Update ex-card green border
+  const card=document.getElementById('excard-'+mid);
+  if(card)card.classList.toggle('all-done',allDone);
+  // Update live summary in card header
+  updateLiveSummary(mid);
 }
 function checkAllDone(mid,total){for(let i=0;i<total;i++){if(!S.setStates[`${mid}_${i}`])return false;}return true;}
 
 function saveLog(mid,sessionMode,numSets,forceTid){
-  const ns=numSets||parseInt(document.getElementById('sets-count-'+mid).textContent);const sets=[];
+  const _scEl=document.getElementById('sets-count-'+mid);
+  const ns=(_scEl?parseInt(_scEl.textContent):0)||numSets||4;const sets=[];
   for(let i=0;i<ns;i++){
     const w=parseFloat(document.getElementById('w-'+mid+'-'+i).value);const r=parseInt(document.getElementById('r-'+mid+'-'+i).value);
-    if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});
+    if(isNaN(w)){showToast('Enter weight for set '+(i+1),true);return;}sets.push({w,r:isNaN(r)?10:r});
   }
   const tid=(forceTid!==undefined)?forceTid:(S.activeSession?S.activeSession.trainingId:null);
   const existing=S.logs.find(l=>l.machineId===mid&&l.trainingId===tid);
   if(existing){existing.sets=sets;existing.unit=S.unit;}
   else S.logs.push({id:S.nid.log++,machineId:mid,trainingId:tid,sets,unit:S.unit});
-  if(checkAllDone(mid,ns))S.setStates[mid+'_done']=true;
   S.openLogMid=null;markDirty();saveState();
   if(sessionMode)renderSessionMachines();else{renderGyms();renderLog();}
 }
@@ -1181,7 +1318,7 @@ function toggleTrainingCard(tid){
 }
 
 function renderHome(){
-  const trainings=[...S.trainings].sort((a,b)=>b.date.localeCompare(a.date));
+  const trainings=[...S.trainings].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
   const shown=trainings.slice(0,S.shownTrainings);const remaining=trainings.length-S.shownTrainings;
   const el=document.getElementById('recent-trainings');
   if(!trainings.length){el.innerHTML='<div style="text-align:center;color:var(--text-secondary);font-size:13px;padding:20px 0;">No trainings yet</div>';return;}
@@ -1343,14 +1480,18 @@ function doAddMachine(gymId){
 
 // ── BACKUP & RESTORE ─────────────────────────────────────────
 function exportBackup(){
-  const backup={
-    version:1,exportedAt:new Date().toISOString(),
-    gyms:S.gyms,machines:S.machines,trainings:S.trainings,logs:S.logs,
-    customExercises:getCustomExercises(),settings:{unit:S.unit,dateFmt:S.dateFmt,favGym:S.favGym}
-  };
-  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`gymtracker-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href);
+  try{
+    const backup={
+      version:1,exportedAt:new Date().toISOString(),
+      gyms:S.gyms,machines:S.machines,trainings:S.trainings,logs:S.logs,
+      customExercises:getCustomExercises(),settings:{unit:S.unit,dateFmt:S.dateFmt,favGym:S.favGym}
+    };
+    const json=JSON.stringify(backup,null,2);
+    const uri='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+    const a=document.createElement('a');
+    a.href=uri;a.download='gymtracker-backup-'+today()+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+  }catch(e){showToast('Export failed: '+e.message,true);}
 }
 
 function importBackup(file){
@@ -1371,8 +1512,8 @@ function importBackup(file){
       // Merge custom exercises
       if(b.customExercises){Object.entries(b.customExercises).forEach(([muscle,exs])=>{if(MUSCLES[muscle]){exs.forEach(e=>{if(!MUSCLES[muscle].find(x=>x.id===e.id)){MUSCLES[muscle].push(e);addedE++;}});}});}
       saveState();renderHome();
-      alert(`Import complete!\nTrainings: +${addedT}\nLogs: +${addedL}\nGyms: +${addedG}\nMachines: +${addedM}\nCustom exercises: +${addedE}`);
-    }catch(err){alert('Import failed: '+err.message);}
+      saveState();renderHome();showToast(`Imported: +${addedT} trainings, +${addedL} logs, +${addedG} gyms, +${addedE} exercises`);
+    }catch(err){showToast('Import failed: '+err.message,true);}
   };
   reader.readAsText(file);
 }
@@ -1417,13 +1558,13 @@ function openEditLog(logId){
   const rows=log.sets.map((s,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:6px;"><div class="set-num">${i+1}</div><input type="number" id="ew-${i}" value="${s.w}" step="2.5" style="text-align:center;padding:6px 4px;"/><input type="number" id="er-${i}" value="${s.r}" style="text-align:center;padding:6px 4px;"/></div>`).join('');
   openModal(`<div class="modal-title">Edit log</div><div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:8px;"><span></span><span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Weight (${S.unit})</span><span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Reps</span></div>${rows}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveEditLog(${logId},${log.sets.length})">Save</button></div>`);
 }
-function saveEditLog(logId,n){const log=S.logs.find(l=>l.id===logId);const sets=[];for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('ew-'+i).value);const r=parseInt(document.getElementById('er-'+i).value);if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});}log.sets=sets;closeModal();saveState();renderLog();}
+function saveEditLog(logId,n){const log=S.logs.find(l=>l.id===logId);const sets=[];for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('ew-'+i).value);const r=parseInt(document.getElementById('er-'+i).value);if(isNaN(w)){showToast('Enter weight for set '+(i+1),true);return;}sets.push({w,r:isNaN(r)?10:r});}log.sets=sets;closeModal();saveState();renderLog();}
 function openAddLog(machineId){
   const last=getLastLog(machineId);const n=last?last.sets.length:4;const defR=[12,10,10,8];const defW=getDefWeight(machineId);
   const rows=Array.from({length:n},(_,i)=>`<div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:6px;"><div class="set-num">${i+1}</div><input type="number" id="aw-${i}" value="${last&&last.sets[i]?last.sets[i].w:defW}" placeholder="${S.unit}" step="2.5" style="text-align:center;padding:6px 4px;"/><input type="number" id="ar-${i}" value="${last&&last.sets[i]?last.sets[i].r:(defR[i]||8)}" style="text-align:center;padding:6px 4px;"/></div>`).join('');
   openModal(`<div class="modal-title">Add log</div><div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:6px;margin-bottom:8px;"><span></span><span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Weight (${S.unit})</span><span style="font-size:11px;color:var(--text-secondary);text-align:center;font-weight:500;">Reps</span></div>${rows}<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="doAddLog(${machineId},${n})">Save</button></div>`);
 }
-function doAddLog(machineId,n){const sets=[];for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('aw-'+i).value);const r=parseInt(document.getElementById('ar-'+i).value);if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});}S.logs.push({id:S.nid.log++,machineId,trainingId:null,sets,unit:S.unit});closeModal();saveState();renderLog();}
+function doAddLog(machineId,n){const sets=[];for(let i=0;i<n;i++){const w=parseFloat(document.getElementById('aw-'+i).value);const r=parseInt(document.getElementById('ar-'+i).value);if(isNaN(w)){showToast('Enter weight for set '+(i+1),true);return;}sets.push({w,r:isNaN(r)?10:r});}S.logs.push({id:S.nid.log++,machineId,trainingId:null,sets,unit:S.unit});closeModal();saveState();renderLog();}
 
 // ── COMPARE ───────────────────────────────────────────────────
 function renderCompare(){
@@ -1449,6 +1590,17 @@ function saveUnit(){S.unit=document.getElementById('unit-select').value;saveStat
 function saveDateFmt(){S.dateFmt=document.getElementById('datefmt-select').value;saveState();}
 function saveGlobalRest(){S.restConfig=S.restConfig.map((_,i)=>parseInt(document.getElementById('grc-'+i).value)||120);saveState();}
 
+
+// ── TOAST ─────────────────────────────────────────────────────
+let _toastTimer=null;
+function showToast(msg,isError){
+  const el=document.getElementById('toast-el');
+  if(!el)return;
+  el.textContent=msg;el.className='toast'+(isError?' error':'');
+  void el.offsetWidth;el.classList.add('show');
+  if(_toastTimer)clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
 // ── INIT ──────────────────────────────────────────────────────
 renderHome();
 renderGymFilters();
