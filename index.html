@@ -430,6 +430,8 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
       <div class="filter-sep"></div>
       <div class="filter-row-label">City</div>
       <div class="filter-pills" id="city-filter-pills"></div>
+      <div class="filter-sep"></div>
+      <input id="gym-search-input" type="search" placeholder="Search by name, area or address…" style="font-size:13px;padding:7px 10px;" oninput="onGymSearch(this.value)"/>
     </div>
     <div class="section-title" id="gyms-count-label">Your gyms</div>
     <div id="gyms-list"></div>
@@ -437,7 +439,14 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
   </div>
 
   <!-- LOG -->
-  <div id="tab-log" class="section"><div id="log-gym-chips"></div><div id="log-content"></div></div>
+  <div id="tab-log" class="section">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="btn small" style="flex:1;" onclick="exportBackup()">⬇ Export backup</button>
+      <label class="btn small" style="flex:1;text-align:center;cursor:pointer;">⬆ Import backup<input type="file" accept=".json" style="display:none;" onchange="importBackup(this.files[0]);this.value='';"/></label>
+    </div>
+    <div id="log-gym-chips"></div>
+    <div id="log-content"></div>
+  </div>
 
   <!-- COMPARE -->
   <div id="tab-compare" class="section">
@@ -494,86 +503,94 @@ input[type="number"]{font-variant-numeric:tabular-nums;font-family:var(--font-mo
 // ── GYM DATABASE ─────────────────────────────────────────────
 const GYM_DB=[
   // MAX FITNESS — Prague (17)
-  {id:'mf1',name:'Max Fitness Roztyly',city:'Prague',network:'Max Fitness'},
-  {id:'mf2',name:'Max Fitness Bílá Labuť',city:'Prague',network:'Max Fitness'},
-  {id:'mf3',name:'Max Fitness Flora',city:'Prague',network:'Max Fitness'},
-  {id:'mf4',name:'Max Fitness Holešovice',city:'Prague',network:'Max Fitness'},
-  {id:'mf5',name:'Max Fitness Hybernská',city:'Prague',network:'Max Fitness'},
-  {id:'mf6',name:'Max Fitness Chodov',city:'Prague',network:'Max Fitness'},
-  {id:'mf7',name:'Max Fitness Krakov',city:'Prague',network:'Max Fitness'},
-  {id:'mf8',name:'Max Fitness Kolbenova',city:'Prague',network:'Max Fitness'},
-  {id:'mf9',name:'Max Fitness Waltrovka',city:'Prague',network:'Max Fitness'},
-  {id:'mf10',name:'Max Fitness Lužiny',city:'Prague',network:'Max Fitness'},
-  {id:'mf11',name:'Max Fitness Štěrboholy',city:'Prague',network:'Max Fitness'},
-  {id:'mf12',name:'Max Fitness Palmovka',city:'Prague',network:'Max Fitness'},
-  {id:'mf13',name:'Max Fitness Pankrác',city:'Prague',network:'Max Fitness'},
-  {id:'mf14',name:'Max Fitness Evropská',city:'Prague',network:'Max Fitness'},
-  {id:'mf15',name:'Max Fitness Ruzyně',city:'Prague',network:'Max Fitness'},
-  {id:'mf16',name:'Max Fitness Nové Butovice',city:'Prague',network:'Max Fitness'},
-  {id:'mf17',name:'Max Fitness Dejvice',city:'Prague',network:'Max Fitness'},
-  // MAX FITNESS — Plzeň (4)
-  {id:'mf18',name:'Max Fitness Doudlevce',city:'Plzeň',network:'Max Fitness'},
-  {id:'mf19',name:'Max Fitness Lochotín',city:'Plzeň',network:'Max Fitness'},
-  {id:'mf20',name:'Max Fitness Slovany',city:'Plzeň',network:'Max Fitness'},
-  {id:'mf21',name:'Max Fitness Borská',city:'Plzeň',network:'Max Fitness'},
+  {id:'mf1',name:'Max Fitness Roztyly',city:'Prague',network:'Max Fitness',address:'Roztyly, Chodovská 2993, Praha 4'},
+  {id:'mf2',name:'Max Fitness Bílá Labuť',city:'Prague',network:'Max Fitness',address:'Na Poříčí 1047/26, Praha 1'},
+  {id:'mf3',name:'Max Fitness Flora',city:'Prague',network:'Max Fitness',address:'Vinohradská 151, Praha 3 (OC Atrium Flora)'},
+  {id:'mf4',name:'Max Fitness Holešovice',city:'Prague',network:'Max Fitness',address:'Dělnická 475/43, Praha 7'},
+  {id:'mf5',name:'Max Fitness Hybernská',city:'Prague',network:'Max Fitness',address:'Hybernská 2140/17, Praha 1'},
+  {id:'mf6',name:'Max Fitness Chodov',city:'Prague',network:'Max Fitness',address:'Roztylská 2321/19, Praha 11 (OC Chodov)'},
+  {id:'mf7',name:'Max Fitness Krakov',city:'Prague',network:'Max Fitness',address:'Budějovická 1912/64b, Praha 4'},
+  {id:'mf8',name:'Max Fitness Kolbenova',city:'Prague',network:'Max Fitness',address:'Poděbradská 777, Praha 9 (Galerie Harfa)'},
+  {id:'mf9',name:'Max Fitness Waltrovka',city:'Prague',network:'Max Fitness',address:'Jinonická 804/80, Praha 5'},
+  {id:'mf10',name:'Max Fitness Lužiny',city:'Prague',network:'Max Fitness',address:'Lužiny 848, Praha 13'},
+  {id:'mf11',name:'Max Fitness Štěrboholy',city:'Prague',network:'Max Fitness',address:'Průmyslová 1306/7, Praha 10'},
+  {id:'mf12',name:'Max Fitness Palmovka',city:'Prague',network:'Max Fitness',address:'Zenklova 32, Praha 8'},
+  {id:'mf13',name:'Max Fitness Pankrác',city:'Prague',network:'Max Fitness',address:'Na Pankráci 1724/129, Praha 4'},
+  {id:'mf14',name:'Max Fitness Evropská',city:'Prague',network:'Max Fitness',address:'Evropská 2758/11, Praha 6'},
+  {id:'mf15',name:'Max Fitness Ruzyně',city:'Prague',network:'Max Fitness',address:'Letiště Václava Havla, Praha 6'},
+  {id:'mf16',name:'Max Fitness Nové Butovice',city:'Prague',network:'Max Fitness',address:'Bucharova 2928/14a, Praha 5'},
+  {id:'mf17',name:'Max Fitness Dejvice',city:'Prague',network:'Max Fitness',address:'Jugoslávských partyzánů 31, Praha 6'},
+  // MAX FITNESS — Plzeň (5)
+  {id:'mf18',name:'Max Fitness Doudlevce',city:'Plzeň',network:'Max Fitness',address:'Denisovo nábřeží 2, Plzeň'},
+  {id:'mf19',name:'Max Fitness Lochotín',city:'Plzeň',network:'Max Fitness',address:'Lochotínská 18, Plzeň'},
+  {id:'mf20',name:'Max Fitness Slovany',city:'Plzeň',network:'Max Fitness',address:'Slovanská alej 25, Plzeň'},
+  {id:'mf21',name:'Max Fitness Borská',city:'Plzeň',network:'Max Fitness',address:'Borská 55, Plzeň'},
+  {id:'mf22',name:'Max Fitness Plzeň Centrum',city:'Plzeň',network:'Max Fitness',address:'Americká 60, Plzeň'},
   // MAX FITNESS — Kladno (1)
-  {id:'mf22',name:'Max Fitness Kladno',city:'Kladno',network:'Max Fitness'},
-  // FORM FACTORY — Prague (28)
-  {id:'ff1',name:'Form Factory Václavské nám.',city:'Prague',network:'Form Factory'},
-  {id:'ff2',name:'Form Factory Nový Smíchov',city:'Prague',network:'Form Factory'},
-  {id:'ff3',name:'Form Factory I.P. Pavlova',city:'Prague',network:'Form Factory'},
-  {id:'ff4',name:'Form Factory Letňany',city:'Prague',network:'Form Factory'},
-  {id:'ff5',name:'Form Factory Holešovice SO-HO',city:'Prague',network:'Form Factory'},
-  {id:'ff6',name:'Form Factory Palladium',city:'Prague',network:'Form Factory'},
-  {id:'ff7',name:'Form Factory Vršovická',city:'Prague',network:'Form Factory'},
-  {id:'ff8',name:'Form Factory Butovice',city:'Prague',network:'Form Factory'},
-  {id:'ff9',name:'Form Factory Malešice',city:'Prague',network:'Form Factory'},
-  {id:'ff10',name:'Form Factory Vinohrady',city:'Prague',network:'Form Factory'},
-  {id:'ff11',name:'Form Factory Holešovice',city:'Prague',network:'Form Factory'},
-  {id:'ff12',name:'Form Factory Hostivař',city:'Prague',network:'Form Factory'},
-  {id:'ff13',name:'Form Factory Stodůlky',city:'Prague',network:'Form Factory'},
-  {id:'ff14',name:'Form Factory Chodov',city:'Prague',network:'Form Factory'},
-  {id:'ff15',name:'Form Factory Opatov',city:'Prague',network:'Form Factory'},
-  {id:'ff16',name:'Form Factory Fénix',city:'Prague',network:'Form Factory'},
-  {id:'ff17',name:'Form Factory Pankrác',city:'Prague',network:'Form Factory'},
-  {id:'ff18',name:'Form Factory Žižkov',city:'Prague',network:'Form Factory'},
-  {id:'ff19',name:'Form Factory Karlín',city:'Prague',network:'Form Factory'},
-  {id:'ff20',name:'Form Factory Nusle',city:'Prague',network:'Form Factory'},
-  {id:'ff21',name:'Form Factory Smíchov',city:'Prague',network:'Form Factory'},
-  {id:'ff22',name:'Form Factory Dejvice',city:'Prague',network:'Form Factory'},
-  {id:'ff23',name:'Form Factory Černý Most',city:'Prague',network:'Form Factory'},
-  {id:'ff24',name:'Form Factory Modřany',city:'Prague',network:'Form Factory'},
-  {id:'ff25',name:'Form Factory Zličín',city:'Prague',network:'Form Factory'},
-  {id:'ff26',name:'Form Factory Prosek',city:'Prague',network:'Form Factory'},
-  {id:'ff27',name:'Form Factory Kobylisy',city:'Prague',network:'Form Factory'},
-  {id:'ff28',name:'Form Factory Anděl',city:'Prague',network:'Form Factory'},
+  {id:'mf23',name:'Max Fitness Kladno',city:'Kladno',network:'Max Fitness',address:'Cyrila Boudy 2953, Kladno'},
+  // FORM FACTORY — Prague
+  {id:'ff1',name:'Form Factory Václavské nám.',city:'Prague',network:'Form Factory',address:'Václavské náměstí 1, Praha 1'},
+  {id:'ff2',name:'Form Factory Na Knížecí',city:'Prague',network:'Form Factory',address:'Plzeňská 8, Praha 5 (OC Nový Smíchov)'},
+  {id:'ff3',name:'Form Factory I.P. Pavlova',city:'Prague',network:'Form Factory',address:'Blanická 1, Praha 2'},
+  {id:'ff4',name:'Form Factory Letňany',city:'Prague',network:'Form Factory',address:'Veselská 663, Praha 9 (OC Letňany)'},
+  {id:'ff5',name:'Form Factory SO-HO',city:'Prague',network:'Form Factory',address:'Dělnická 54, Praha 7 (SO-HO Holešovice)'},
+  {id:'ff6',name:'Form Factory Palladium',city:'Prague',network:'Form Factory',address:'náměstí Republiky 1, Praha 1 (OC Palladium)'},
+  {id:'ff7',name:'Form Factory Vršovická',city:'Prague',network:'Form Factory',address:'Vršovická 60, Praha 10'},
+  {id:'ff8',name:'Form Factory Butovice',city:'Prague',network:'Form Factory',address:'Bucharova 2, Praha 5 (OC Butovice)'},
+  {id:'ff9',name:'Form Factory Malešice',city:'Prague',network:'Form Factory',address:'Průmyslová 11, Praha 10'},
+  {id:'ff10',name:'Form Factory Vinohradská',city:'Prague',network:'Form Factory',address:'Vinohradská 190, Praha 3'},
+  {id:'ff11',name:'Form Factory Holešovice',city:'Prague',network:'Form Factory',address:'Argentinská 38, Praha 7'},
+  {id:'ff12',name:'Form Factory Hostivař',city:'Prague',network:'Form Factory',address:'Průmyslová 1300, Praha 10'},
+  {id:'ff13',name:'Form Factory Stodůlky',city:'Prague',network:'Form Factory',address:'Nárožní 2, Praha 13'},
+  {id:'ff14',name:'Form Factory Chodov',city:'Prague',network:'Form Factory',address:'Roztylská 19, Praha 11 (OC Chodov)'},
+  {id:'ff15',name:'Form Factory Štúrova',city:'Prague',network:'Form Factory',address:'Štúrova 55, Praha 4'},
+  {id:'ff16',name:'Form Factory Fénix',city:'Prague',network:'Form Factory',address:'V Olšinách 75, Praha 10 (OC Fénix)'},
+  {id:'ff17',name:'Form Factory Pankrác',city:'Prague',network:'Form Factory',address:'Na Pankráci 86, Praha 4'},
+  {id:'ff18',name:'Form Factory Karlín',city:'Prague',network:'Form Factory',address:'Thámova 13, Praha 8'},
+  {id:'ff19',name:'Form Factory Kolbenova',city:'Prague',network:'Form Factory',address:'Poděbradská 777, Praha 9'},
+  {id:'ff20',name:'Form Factory Ládví',city:'Prague',network:'Form Factory',address:'Střelničná 8, Praha 8'},
+  {id:'ff21',name:'Form Factory Anděl',city:'Prague',network:'Form Factory',address:'Plzeňská 113, Praha 5'},
+  {id:'ff22',name:'Form Factory Brumlovka',city:'Prague',network:'Form Factory',address:'Na Strži 65, Praha 4'},
+  {id:'ff23',name:'Form Factory Černý Most',city:'Prague',network:'Form Factory',address:'Chlumecká 765, Praha 9 (OC Černý Most)'},
+  {id:'ff24',name:'Form Factory Centrum Černý Most',city:'Prague',network:'Form Factory',address:'Chlumecká 1, Praha 14 (CC Černý Most)'},
+  {id:'ff25',name:'Form Factory Zličín',city:'Prague',network:'Form Factory',address:'Řevnická 1, Praha 5 (OC Zličín)'},
+  {id:'ff26',name:'Form Factory Podkovářská',city:'Prague',network:'Form Factory',address:'Podkovářská 6, Praha 9'},
+  {id:'ff27',name:'Form Factory Štěrboholy',city:'Prague',network:'Form Factory',address:'Průmyslová 7, Praha 10'},
+  {id:'ff28',name:'Form Factory Eden',city:'Prague',network:'Form Factory',address:'Vladivostocká 1460, Praha 10'},
+  {id:'ff29',name:'Form Factory Harfa',city:'Prague',network:'Form Factory',address:'Poděbradská 777, Praha 9 (OC Harfa)'},
+  {id:'ff30',name:'Form Factory The Gym Argentinská',city:'Prague',network:'Form Factory',address:'Argentinská 38, Praha 7'},
+  {id:'ff31',name:'Form Factory The Gym Hradčanská',city:'Prague',network:'Form Factory',address:'Hradčanská, Praha 6'},
+  {id:'ff32',name:'Form Factory The Gym Na Strži',city:'Prague',network:'Form Factory',address:'Na Strži 65, Praha 4'},
+  {id:'ff33',name:'Form Factory The Gym Pragovka',city:'Prague',network:'Form Factory',address:'Kolbenova 923/34a, Praha 9'},
   // FORM FACTORY — Brno (5)
-  {id:'ff29',name:'Form Factory Botanická',city:'Brno',network:'Form Factory'},
-  {id:'ff30',name:'Form Factory Campus',city:'Brno',network:'Form Factory'},
-  {id:'ff31',name:'Form Factory Lužánky',city:'Brno',network:'Form Factory'},
-  {id:'ff32',name:'Form Factory Průvan',city:'Brno',network:'Form Factory'},
-  {id:'ff33',name:'Form Factory Vlněna',city:'Brno',network:'Form Factory'},
+  {id:'ff34',name:'Form Factory Botanická',city:'Brno',network:'Form Factory',address:'Botanická 56, Brno'},
+  {id:'ff35',name:'Form Factory Campus',city:'Brno',network:'Form Factory',address:'Šumavská 15, Brno (Campus Square)'},
+  {id:'ff36',name:'Form Factory Lužánky',city:'Brno',network:'Form Factory',address:'třída Kpt. Jaroše 1922/3, Brno'},
+  {id:'ff37',name:'Form Factory Průvan',city:'Brno',network:'Form Factory',address:'Pražákova 52, Brno (Olympia)'},
+  {id:'ff38',name:'Form Factory Vlněna',city:'Brno',network:'Form Factory',address:'Přadlácká 4, Brno'},
   // FORM FACTORY — Ostrava (4)
-  {id:'ff34',name:'Form Factory Hrabová',city:'Ostrava',network:'Form Factory'},
-  {id:'ff35',name:'Form Factory Karolina',city:'Ostrava',network:'Form Factory'},
-  {id:'ff36',name:'Form Factory Laso',city:'Ostrava',network:'Form Factory'},
-  {id:'ff37',name:'Form Factory Avion',city:'Ostrava',network:'Form Factory'},
+  {id:'ff39',name:'Form Factory Hrabová',city:'Ostrava',network:'Form Factory',address:'Místecká 329, Ostrava-Hrabová'},
+  {id:'ff40',name:'Form Factory Karolina',city:'Ostrava',network:'Form Factory',address:'Jantarová 3344, Ostrava (OC Karolina)'},
+  {id:'ff41',name:'Form Factory Laso',city:'Ostrava',network:'Form Factory',address:'28. října 3348, Ostrava'},
+  {id:'ff42',name:'Form Factory Avion',city:'Ostrava',network:'Form Factory',address:'Rudná 114, Ostrava (Avion SC)'},
   // FORM FACTORY — Liberec (2)
-  {id:'ff38',name:'Form Factory Fügnerova',city:'Liberec',network:'Form Factory'},
-  {id:'ff39',name:'Form Factory Rochlice',city:'Liberec',network:'Form Factory'},
+  {id:'ff43',name:'Form Factory Fügnerova',city:'Liberec',network:'Form Factory',address:'Fügnerova 1, Liberec'},
+  {id:'ff44',name:'Form Factory Rochlice',city:'Liberec',network:'Form Factory',address:'Rochlice, Liberec'},
   // FORM FACTORY — Opava (1)
-  {id:'ff40',name:'Form Factory Breda',city:'Opava',network:'Form Factory'},
-  // FORM FACTORY — Havířov (1)
-  {id:'ff41',name:'Form Factory Bílý Dům',city:'Havířov',network:'Form Factory'},
-];
+  {id:'ff45',name:'Form Factory Breda',city:'Opava',network:'Form Factory',address:'Těšínská 2a, Opava (Breda & Weinstein)'},
+  // FORM FACTORY — Pardubice (1)
+  {id:'ff46',name:'Form Factory Forum Pardubice',city:'Pardubice',network:'Form Factory',address:'Palackého 2744, Pardubice (Forum)'},
+  // FORM FACTORY — Plzeň (1)
+  {id:'ff47',name:'Form Factory Plzeň Kasárny',city:'Plzeň',network:'Form Factory',address:'Lochotínská 11, Plzeň'},
+]
 
 const MUSCLES={
-  Chest:[{id:1,name:'Bench press',defaultSets:4,defaultWeight:60},{id:101,name:'Incline bench press',defaultSets:4,defaultWeight:50},{id:102,name:'Cable fly',defaultSets:3,defaultWeight:15},{id:103,name:'Chest dip',defaultSets:3,defaultWeight:0},{id:104,name:'Pec deck',defaultSets:3,defaultWeight:40},{id:105,name:'Decline bench press',defaultSets:4,defaultWeight:55},{id:106,name:'Dumbbell fly',defaultSets:3,defaultWeight:14}],
+  Chest:[{id:1,name:'Bench press',defaultSets:4,defaultWeight:60},{id:101,name:'Incline bench press',defaultSets:4,defaultWeight:50},{id:102,name:'Cable fly',defaultSets:3,defaultWeight:15},{id:103,name:'Chest dip',defaultSets:3,defaultWeight:0},{id:104,name:'Pec deck',defaultSets:3,defaultWeight:40},{id:105,name:'Decline bench press',defaultSets:4,defaultWeight:55},{id:106,name:'Dumbbell fly',defaultSets:3,defaultWeight:14},{id:107,name:'Decline dumbbell fly with rotation',defaultSets:3,defaultWeight:12}],
   Back:[{id:3,name:'Lat pulldown',defaultSets:4,defaultWeight:50},{id:111,name:'Cable row',defaultSets:4,defaultWeight:45},{id:112,name:'Seated row',defaultSets:4,defaultWeight:45},{id:113,name:'Deadlift',defaultSets:4,defaultWeight:80},{id:114,name:'T-bar row',defaultSets:4,defaultWeight:40},{id:115,name:'Pull-up',defaultSets:3,defaultWeight:0},{id:116,name:'Single-arm row',defaultSets:3,defaultWeight:20}],
   Legs:[{id:6,name:'Leg press',defaultSets:4,defaultWeight:100},{id:121,name:'Squat rack',defaultSets:4,defaultWeight:70},{id:122,name:'Leg curl',defaultSets:3,defaultWeight:35},{id:123,name:'Leg extension',defaultSets:3,defaultWeight:35},{id:124,name:'Hip thrust',defaultSets:4,defaultWeight:60},{id:125,name:'Romanian deadlift',defaultSets:4,defaultWeight:60},{id:126,name:'Calf raise',defaultSets:4,defaultWeight:50}],
   Shoulders:[{id:4,name:'Shoulder press',defaultSets:4,defaultWeight:40},{id:131,name:'Lateral raise',defaultSets:3,defaultWeight:10},{id:132,name:'Front raise',defaultSets:3,defaultWeight:10},{id:133,name:'Rear delt fly',defaultSets:3,defaultWeight:10},{id:134,name:'Arnold press',defaultSets:4,defaultWeight:16},{id:135,name:'Face pull',defaultSets:3,defaultWeight:20},{id:136,name:'Upright row',defaultSets:3,defaultWeight:30}],
   Biceps:[{id:10,name:'Barbell curl',defaultSets:4,defaultWeight:30},{id:141,name:'Incline dumbbell curl',defaultSets:3,defaultWeight:12},{id:142,name:'Hammer curl',defaultSets:3,defaultWeight:14},{id:143,name:'Cable curl',defaultSets:3,defaultWeight:20},{id:144,name:'Preacher curl',defaultSets:4,defaultWeight:25},{id:145,name:'Concentration curl',defaultSets:3,defaultWeight:12},{id:146,name:'Spider curl',defaultSets:3,defaultWeight:12}],
-  Triceps:[{id:11,name:'Tricep pushdown',defaultSets:4,defaultWeight:30},{id:151,name:'Skull crusher',defaultSets:4,defaultWeight:30},{id:152,name:'Overhead extension',defaultSets:3,defaultWeight:20},{id:153,name:'Tricep dip',defaultSets:3,defaultWeight:0},{id:154,name:'Cable kickback',defaultSets:3,defaultWeight:10},{id:155,name:'Close-grip bench press',defaultSets:4,defaultWeight:50},{id:156,name:'Single-arm pushdown',defaultSets:3,defaultWeight:15}],
+  Triceps:[{id:11,name:'Tricep pushdown',defaultSets:4,defaultWeight:30},{id:151,name:'Skull crusher',defaultSets:4,defaultWeight:30},{id:152,name:'Overhead extension',defaultSets:3,defaultWeight:20},{id:153,name:'Tricep dip',defaultSets:3,defaultWeight:0},{id:154,name:'Cable kickback',defaultSets:3,defaultWeight:10},{id:155,name:'Close-grip bench press',defaultSets:4,defaultWeight:50},{id:156,name:'Single-arm pushdown',defaultSets:3,defaultWeight:15},{id:157,name:'Straight bar pushdown',defaultSets:4,defaultWeight:25},{id:158,name:'Rope pushdown',defaultSets:4,defaultWeight:20},{id:159,name:'French press',defaultSets:4,defaultWeight:25}],
 };
 const TEMPLATES={top:['Bench press','Lat pulldown'],bottom:['Leg press','Squat rack']};
 
@@ -588,72 +605,55 @@ let activeQuickAddMid=null,activeQuickAddIdx=null;
 let filterNetworks=new Set(),filterCities=new Set();
 
 // ── PERSISTENCE ──────────────────────────────────────────────
-const STORAGE_KEY='gymtracker_v12';
-
+const STORAGE_KEY='gymtracker_v13';
 function saveState(){
   try{
-    const toSave={
-      gyms:S.gyms,machines:S.machines,logs:S.logs,trainings:S.trainings,
+    const d={gyms:S.gyms,machines:S.machines,logs:S.logs,trainings:S.trainings,
       favGym:S.favGym,unit:S.unit,dateFmt:S.dateFmt,theme:S.theme,
-      restConfig:S.restConfig,shownTrainings:S.shownTrainings,
-      shownGyms:S.shownGyms,selectedLogGym:S.selectedLogGym,
-      nid:S.nid,
+      restConfig:S.restConfig,shownTrainings:S.shownTrainings,shownGyms:S.shownGyms,
+      selectedLogGym:S.selectedLogGym,nid:S.nid,
       expandedTrainings:[...S.expandedTrainings],
-    };
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(toSave));
+      customExercises:getCustomExercises()};
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
   }catch(e){console.warn('Save failed',e);}
 }
-
 function loadState(){
-  try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(!raw)return null;
-    const d=JSON.parse(raw);
-    // Migrate expandedTrainings from array back to Set
-    if(Array.isArray(d.expandedTrainings))d.expandedTrainings=new Set(d.expandedTrainings);
-    else d.expandedTrainings=new Set();
-    return d;
-  }catch(e){console.warn('Load failed',e);return null;}
+  try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return null;const d=JSON.parse(raw);d.expandedTrainings=new Set(d.expandedTrainings||[]);return d;}
+  catch(e){console.warn('Load failed',e);return null;}
 }
-
+function getCustomExercises(){
+  const builtin={Chest:[1,101,102,103,104,105,106],Back:[3,111,112,113,114,115,116],Legs:[6,121,122,123,124,125,126],Shoulders:[4,131,132,133,134,135,136],Biceps:[10,141,142,143,144,145,146],Triceps:[11,151,152,153,154,155,156,157,158,159],Chest:[1,101,102,103,104,105,106,107]};
+  const result={};
+  Object.entries(MUSCLES).forEach(([m,exs])=>{
+    const customs=exs.filter(e=>e.id>=300);
+    if(customs.length)result[m]=customs;
+  });
+  return result;
+}
 const _saved=loadState();
-
 const S=_saved?{
-  gyms:_saved.gyms||[],
-  machines:_saved.machines||[],
-  logs:_saved.logs||[],
-  trainings:_saved.trainings||[],
+  gyms:_saved.gyms||[],machines:_saved.machines||[],logs:_saved.logs||[],trainings:_saved.trainings||[],
   expandedTrainings:_saved.expandedTrainings||new Set(),
   activeSession:null,openLogMid:null,
-  favGym:_saved.favGym||null,
-  unit:_saved.unit||'kg',
-  dateFmt:_saved.dateFmt||'EU',
-  theme:_saved.theme||'default',
-  restConfig:_saved.restConfig||[120,120,180],
-  shownTrainings:_saved.shownTrainings||2,
-  shownGyms:_saved.shownGyms||5,
-  selectedLogGym:_saved.selectedLogGym||null,
-  setStates:{},
+  favGym:_saved.favGym||null,unit:_saved.unit||'kg',dateFmt:_saved.dateFmt||'EU',theme:_saved.theme||'default',
+  restConfig:_saved.restConfig||[120,120,180],shownTrainings:_saved.shownTrainings||2,
+  shownGyms:_saved.shownGyms||5,selectedLogGym:_saved.selectedLogGym||null,setStates:{},
   nid:_saved.nid||{gym:1000,machine:200,log:1,training:1,exc:300}
 }:{
-  gyms:[],machines:[],logs:[],trainings:[],
-  expandedTrainings:new Set(),
-  activeSession:null,openLogMid:null,
-  favGym:null,unit:'kg',dateFmt:'EU',theme:'default',
-  restConfig:[120,120,180],
-  shownTrainings:2,shownGyms:5,selectedLogGym:null,
-  setStates:{},
+  gyms:[],machines:[],logs:[],trainings:[],expandedTrainings:new Set(),
+  activeSession:null,openLogMid:null,favGym:null,unit:'kg',dateFmt:'EU',theme:'default',
+  restConfig:[120,120,180],shownTrainings:2,shownGyms:5,selectedLogGym:null,setStates:{},
   nid:{gym:1000,machine:200,log:1,training:1,exc:300}
 };
-
-// Load GYM_DB only if no saved gyms exist yet
+// Restore custom exercises
+if(_saved&&_saved.customExercises){Object.entries(_saved.customExercises).forEach(([m,exs])=>{if(MUSCLES[m]){exs.forEach(e=>{if(!MUSCLES[m].find(x=>x.id===e.id))MUSCLES[m].push(e);});}});}
+// Load GYM_DB only if no gyms saved
 if(!_saved||!_saved.gyms||_saved.gyms.length===0){
-  GYM_DB.forEach(g=>{
-    S.gyms.push({id:g.id,name:g.name,location:g.city,network:g.network});
-  });
-  S.favGym=S.gyms[0]?.id||null;
-  saveState();
+  GYM_DB.forEach(g=>{S.gyms.push({id:g.id,name:g.name,location:g.city,network:g.network,address:g.address||''});});
+  S.favGym=S.gyms[0]?.id||null;saveState();
 }
+// Backfill address field from GYM_DB if missing
+S.gyms.forEach(g=>{if(!g.address){const db=GYM_DB.find(x=>x.id===g.id);if(db&&db.address)g.address=db.address;}});
 
 // ── UTILS ────────────────────────────────────────────────────
 function fmtDate(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return S.dateFmt==='EU'?`${d}.${m}.${y}`:`${m}/${d}/${y}`;}
@@ -669,7 +669,7 @@ function getDefWeight(mid){const m=S.machines.find(x=>x.id===mid);if(m&&m.defaul
 function getLastTrainingDate(gymId){const ts=S.trainings.filter(t=>t.gymId===gymId).sort((a,b)=>b.date.localeCompare(a.date));return ts[0]?.date||null;}
 function countTrainings(gymId){return S.trainings.filter(t=>t.gymId===gymId).length;}
 function markDirty(){sessionDirty=true;document.getElementById('save-session-wrap').style.display='block';}
-function fmtDuration(sec){const m=Math.floor(sec/60);return m<1?'<1 min':`${m} min`;}
+function fmtDuration(sec){const m=Math.floor(sec/60);if(m<1)return'<1 min';if(m<60)return`${m} min`;const h=Math.floor(m/60);const rem=m%60;return rem?`${h}h ${rem}min`:`${h}h`;}
 function getMuscle(mid){const m=S.machines.find(x=>x.id===mid);return m?.muscle||'Other';}
 function getMusclesForTraining(t){return[...new Set(t.machineIds.map(mid=>getMuscle(mid)).filter(Boolean))];}
 function getGroupedMachines(t){
@@ -684,13 +684,7 @@ function netTagClass(network){if(network==='Max Fitness')return'mf';if(network==
 function netTagLabel(network){if(network==='Max Fitness')return'Max Fitness';if(network==='Form Factory')return'Form Factory';return 'Custom';}
 
 // ── FILTERS ───────────────────────────────────────────────────
-function getFilteredGyms(){
-  return S.gyms.filter(g=>{
-    const netOk=filterNetworks.size===0||filterNetworks.has(g.network||'Custom');
-    const cityOk=filterCities.size===0||filterCities.has(g.location);
-    return netOk&&cityOk;
-  });
-}
+// getFilteredGyms defined above with search support
 
 function toggleNetworkFilter(net){
   if(filterNetworks.has(net))filterNetworks.delete(net);else filterNetworks.add(net);
@@ -837,7 +831,7 @@ function startWithTemplate(tplKey){
 function launchSession(tid,gymId,date,existingDuration){
   S.activeSession={trainingId:tid,gymId,date};
   S.setStates={};sessionDirty=false;S.openLogMid=null;
-  if(existingDuration!=null)sessionDurationSec=existingDuration*60;
+  sessionDurationSec=(existingDuration!=null&&existingDuration>0)?existingDuration*60:0;
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-home').classList.add('active');
@@ -850,36 +844,57 @@ function launchSession(tid,gymId,date,existingDuration){
   document.getElementById('session-duration-display').textContent=fmtDuration(sessionDurationSec);
   document.getElementById('session-edit-box').classList.remove('open');
   document.getElementById('save-session-wrap').style.display='none';
-  closeAddExPanel();stopDurationTimer();startDurationTimer();
+  document.getElementById('resume-btn-wrap').style.display='none';
+  closeAddExPanel();stopDurationTimer();
+  // Only auto-start timer for new trainings (existingDuration==0), not when editing
+  if(sessionDurationSec===0)startDurationTimer();
   renderSessionMachines();
 }
 
-function editTraining(tid){const t=S.trainings.find(x=>x.id===tid);launchSession(tid,t.gymId,t.date,t.duration||0);}
+function editTraining(tid){
+  const t=S.trainings.find(x=>x.id===tid);
+  if(!t)return;
+  launchSession(tid,t.gymId,t.date,t.duration||0);
+  document.getElementById('resume-btn-wrap').style.display='flex';
+}
+
+function confirmResumeTraining(){
+  showConfirm('Resume this training?','The timer will continue from where you left off. You can add more exercises and sets.','Resume',()=>{
+    document.getElementById('resume-btn-wrap').style.display='none';
+    sessionDirty=true;
+    document.getElementById('save-session-wrap').style.display='block';
+    startDurationTimer();
+  });
+}
 
 function toggleSessionEdit(){
   const box=document.getElementById('session-edit-box');
   if(!box.classList.contains('open')){
     document.getElementById('se-date').value=S.activeSession.date;
     document.getElementById('se-gym').innerHTML=S.gyms.map(g=>`<option value="${g.id}" ${g.id===S.activeSession.gymId?'selected':''}>${g.name}</option>`).join('');
+    const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
+    document.getElementById('se-bodyweight').value=t&&t.bodyWeight?t.bodyWeight:'';
     box.classList.add('open');
   } else box.classList.remove('open');
 }
 function saveSessionEdit(){
   const d=document.getElementById('se-date').value;const gid=document.getElementById('se-gym').value;
+  const bw=parseFloat(document.getElementById('se-bodyweight').value)||null;
   S.activeSession.date=d;S.activeSession.gymId=gid;
-  const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);if(t){t.date=d;t.gymId=gid;}
+  const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
+  if(t){t.date=d;t.gymId=gid;if(bw)t.bodyWeight=bw;else delete t.bodyWeight;}
   document.getElementById('session-gym-title').textContent=gymName(gid);
   document.getElementById('session-date-title').textContent=fmtDate(d);
-  document.getElementById('session-edit-box').classList.remove('open');markDirty();
+  document.getElementById('session-edit-box').classList.remove('open');markDirty();saveState();
 }
 
 function confirmSaveTraining(){showConfirm('Save training?','Your sets and weights will be saved.','Save training',endSessionFlow);}
-function confirmEndTraining(){if(sessionDirty)showConfirm('End training?','End and keep all changes?','End training',endSessionFlow);else endSessionFlow();}
+function confirmEndTraining(){showConfirm('End & save training?','Timer will stop and all data will be saved.','End training',endSessionFlow);}
 function endSessionFlow(){
   const t=S.trainings.find(x=>x.id===S.activeSession.trainingId);
   if(t){t.duration=Math.max(1,Math.floor(sessionDurationSec/60));t.muscles=getMusclesForTraining(t);}
-  stopDurationTimer();S.activeSession=null;S.openLogMid=null;S.setStates={};sessionDirty=false;sessionDurationSec=0;
-  saveState();
+  stopDurationTimer();saveState();
+  S.activeSession=null;S.openLogMid=null;S.setStates={};sessionDirty=false;sessionDurationSec=0;
   document.getElementById('active-session').style.display='none';document.getElementById('home-main').style.display='block';renderHome();
 }
 
@@ -1112,13 +1127,13 @@ function toggleSetDone(mid,idx,total){
 }
 function checkAllDone(mid,total){for(let i=0;i<total;i++){if(!S.setStates[`${mid}_${i}`])return false;}return true;}
 
-function saveLog(mid,sessionMode,numSets){
+function saveLog(mid,sessionMode,numSets,forceTid){
   const ns=numSets||parseInt(document.getElementById('sets-count-'+mid).textContent);const sets=[];
   for(let i=0;i<ns;i++){
     const w=parseFloat(document.getElementById('w-'+mid+'-'+i).value);const r=parseInt(document.getElementById('r-'+mid+'-'+i).value);
     if(isNaN(w)){alert('Enter weight for set '+(i+1));return;}sets.push({w,r:isNaN(r)?10:r});
   }
-  const tid=S.activeSession?S.activeSession.trainingId:null;
+  const tid=(forceTid!==undefined)?forceTid:(S.activeSession?S.activeSession.trainingId:null);
   const existing=S.logs.find(l=>l.machineId===mid&&l.trainingId===tid);
   if(existing){existing.sets=sets;existing.unit=S.unit;}
   else S.logs.push({id:S.nid.log++,machineId:mid,trainingId:tid,sets,unit:S.unit});
@@ -1173,7 +1188,7 @@ function renderHome(){
   el.innerHTML=shown.map(t=>{
     const gym=gymById(t.gymId);
     const muscles=t.muscles&&t.muscles.length?t.muscles.join(' · '):'';
-    const dur=t.duration?`${t.duration} min`:'';
+    const dur=t.duration?fmtDuration(t.duration*60):'';
     const meta=[muscles,dur].filter(Boolean).join(' — ');
     const isExpanded=S.expandedTrainings.has(t.id);
     const exs=t.machineIds.map(mid=>{
@@ -1185,7 +1200,7 @@ function renderHome(){
       <div class="training-hdr" onclick="toggleTrainingCard(${t.id})">
         <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:700;">${gym?gym.name:'?'}</div>
-          <div style="font-size:12px;color:var(--text-secondary);">${fmtDate(t.date)}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${fmtDate(t.date)}${t.bodyWeight?` <span style='color:var(--text-hint);'>(${t.bodyWeight}${S.unit})</span>`:''}</div>
           ${meta?`<div style="font-size:11px;color:var(--text-hint);margin-top:2px;">${meta}</div>`:''}
         </div>
         <div style="display:flex;align-items:flex-start;gap:6px;">
@@ -1244,7 +1259,7 @@ function renderGyms(){
 function showMoreGyms(){S.shownGyms+=5;renderGyms();}
 
 function setFavGym(id){
-  S.favGym=id;document.getElementById('active-gym-label').textContent='Favourite: '+gymName(id);
+  S.favGym=id;document.getElementById('active-gym-label').textContent='Favourite: '+gymName(id);saveState();
   renderGyms();if(document.getElementById('tab-settings').classList.contains('active'))renderSettings();
 }
 
@@ -1306,7 +1321,7 @@ function doAddGym(){
   const name=document.getElementById('ng-name').value.trim();const loc=document.getElementById('ng-loc').value.trim();
   if(!name)return;
   const id='custom_'+S.nid.gym++;
-  S.gyms.push({id,name,location:loc||'—',network:'Custom'});
+  S.gyms.push({id,name,location:loc||'—',network:'Custom',address:''});
   closeModal();saveState();renderGymFilters();renderGyms();
 }
 
@@ -1325,10 +1340,66 @@ function doAddMachine(gymId){
   closeModal();saveState();renderGyms();
 }
 
+
+// ── BACKUP & RESTORE ─────────────────────────────────────────
+function exportBackup(){
+  const backup={
+    version:1,exportedAt:new Date().toISOString(),
+    gyms:S.gyms,machines:S.machines,trainings:S.trainings,logs:S.logs,
+    customExercises:getCustomExercises(),settings:{unit:S.unit,dateFmt:S.dateFmt,favGym:S.favGym}
+  };
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`gymtracker-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+
+function importBackup(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const b=JSON.parse(e.target.result);
+      if(!b.version||!b.trainings)throw new Error('Invalid backup file');
+      let addedT=0,addedL=0,addedG=0,addedM=0,addedE=0;
+      // Merge gyms
+      (b.gyms||[]).forEach(g=>{if(!S.gyms.find(x=>x.id===g.id)){S.gyms.push(g);addedG++;}});
+      // Merge machines
+      (b.machines||[]).forEach(m=>{if(!S.machines.find(x=>x.id===m.id)){S.machines.push(m);addedM++;}});
+      // Merge trainings
+      (b.trainings||[]).forEach(t=>{if(!S.trainings.find(x=>x.id===t.id)){S.trainings.push(t);addedT++;}});
+      // Merge logs
+      (b.logs||[]).forEach(l=>{if(!S.logs.find(x=>x.id===l.id)){S.logs.push(l);addedL++;}});
+      // Merge custom exercises
+      if(b.customExercises){Object.entries(b.customExercises).forEach(([muscle,exs])=>{if(MUSCLES[muscle]){exs.forEach(e=>{if(!MUSCLES[muscle].find(x=>x.id===e.id)){MUSCLES[muscle].push(e);addedE++;}});}});}
+      saveState();renderHome();
+      alert(`Import complete!\nTrainings: +${addedT}\nLogs: +${addedL}\nGyms: +${addedG}\nMachines: +${addedM}\nCustom exercises: +${addedE}`);
+    }catch(err){alert('Import failed: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+
+// ── GYM SEARCH ───────────────────────────────────────────────
+let gymSearchQuery='';
+function onGymSearch(val){gymSearchQuery=val.toLowerCase();renderGyms();}
+function getFilteredGyms(){
+  return S.gyms.filter(g=>{
+    const netOk=filterNetworks.size===0||filterNetworks.has(g.network||'Custom');
+    const cityOk=filterCities.size===0||filterCities.has(g.location);
+    const q=gymSearchQuery;
+    const searchOk=!q||(g.name.toLowerCase().includes(q))||(g.location&&g.location.toLowerCase().includes(q))||(g.address&&g.address.toLowerCase().includes(q));
+    return netOk&&cityOk&&searchOk;
+  });
+}
 // ── LOG ───────────────────────────────────────────────────────
 function renderLog(){
   const gymId=S.selectedLogGym||S.favGym||S.gyms[0]?.id;S.selectedLogGym=gymId;
-  const chips=`<div class="section-title">Select gym</div><div style="display:flex;flex-wrap:wrap;margin-bottom:12px;">${S.gyms.map(g=>`<button class="gym-chip ${g.id===gymId?'selected':''}" onclick="selectLogGym('${g.id}')">${g.name}</button>`).join('')}</div>`;
+  // Show 3 most recently visited gyms first
+  const visitedGymIds=[...new Set(S.trainings.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>t.gymId))];
+  const recentGymIds=visitedGymIds.slice(0,3);
+  const recentGyms=recentGymIds.map(id=>S.gyms.find(g=>g.id===id)).filter(Boolean);
+  const otherGyms=S.gyms.filter(g=>!recentGymIds.includes(g.id));
+  const showAllLogGyms=S._showAllLogGyms||false;
+  const displayGyms=showAllLogGyms?S.gyms:[...recentGyms,...(showAllLogGyms?otherGyms:[])];
+  const chips=`<div class="section-title">Select gym</div><div style="display:flex;flex-wrap:wrap;margin-bottom:4px;">${displayGyms.map(g=>`<button class="gym-chip ${g.id===gymId?'selected':''}" onclick="selectLogGym('${g.id}')">${g.name}</button>`).join('')}${!showAllLogGyms&&otherGyms.length?`<button class="gym-chip" onclick="S._showAllLogGyms=true;renderLog()">+${otherGyms.length} more...</button>`:''}</div><div style="margin-bottom:12px;"></div>`;
   const machines=S.machines.filter(m=>m.gymId===gymId);
   const cards=machines.map(m=>{
     const logs=S.logs.filter(l=>l.machineId===m.id).sort((a,b)=>b.id-a.id);
@@ -1383,10 +1454,9 @@ renderHome();
 renderGymFilters();
 renderGyms();
 if(S.favGym)document.getElementById('active-gym-label').textContent='Favourite: '+gymName(S.favGym);
-// Restore saved theme (don't call saveState here to avoid overwriting on cold start)
-const _initTheme=S.theme||'default';
-document.documentElement.setAttribute('data-theme',_initTheme==='default'?'':_initTheme);
-document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.classList.contains('t-'+_initTheme)));
+const _t=S.theme||'default';
+document.documentElement.setAttribute('data-theme',_t==='default'?'':_t);
+document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('active',d.classList.contains('t-'+_t)));
 </script>
 </body>
 </html>
